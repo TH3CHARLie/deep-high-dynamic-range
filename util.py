@@ -1,25 +1,26 @@
 import os
 import numpy as np
+from typing import List
 
 
-def read_dir(path: str, folder_only: bool = True):
+def read_dir(path: str, folder_only: bool = True) -> List[str]:
     if folder_only:
         return [f.path for f in os.scandir(path) if f.is_dir()]
     else:
         return [f.path for f in os.scandir(path)]
 
 
-def im2single(img: np.ndarray):
+def im2single(img: np.ndarray) -> np.ndarray:
     info = np.iinfo(img.dtype)
     return img.astype(np.float32) / info.max
 
 
-def im2double(img: np.ndarray):
+def im2double(img: np.ndarray) -> np.ndarray:
     info = np.iinfo(img.dtype)
     return img.astype(np.float64) / info.max
 
 
-def compute_PSNR(input: np.ndarray, reference: np.ndarray):
+def compute_PSNR(input: np.ndarray, reference: np.ndarray) -> float:
     input = im2single(input)
     reference = im2single(reference)
 

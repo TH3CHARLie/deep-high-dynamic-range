@@ -1,4 +1,4 @@
-# deep-high-dynamic-range
+# deep-high-dynamic-range (WIP)
 Tensorflow implementation of SIGGRAPH 17 paper: Deep High Dynamic Range Imaging of Dynamic Scenes
 
 

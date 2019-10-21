@@ -7,6 +7,7 @@ from typing import List, Set, Dict, Tuple, Optional
 
 GAMMA = 2.2
 
+
 def preprocess_training_data(config: Config):
     """
     preprocess training data, pack it into h5 file
@@ -17,7 +18,8 @@ def preprocess_training_data(config: Config):
         exposures = read_exposure(scene_path)
         print(f"exposures: {exposures}")
         ldr_imgs, hdr_img = read_ldr_hdr_images(scene_path)
-        inputs, label = compute_training_examples(ldr_imgs, exposures, hdr_img, config)
+        # inputs, label = compute_training_examples(
+            # ldr_imgs, exposures, hdr_img, config)
         # write_training_examples(inputs, label, config.TRAINING_DATA_PATH, "TrainingSequence.h5")
 
 
@@ -57,11 +59,11 @@ def read_ldr_hdr_images(path: str) -> Tuple[List[np.ndarray], np.ndarray]:
 
 def compute_training_examples(ldr_imgs: List[np.ndarray], exposures: List[float], hdr_img: np.ndarray, config: Config):
     inputs, labels = prepare_input_features(ldr_imgs, exposures, hdr_img)
-
+    return None
 
 def prepare_input_features(ldr_imgs: List[np.ndarray], exposures: List[float], hdr_img: np.ndarray, is_test: bool = False):
     ldr_imgs = compute_optical_flow(ldr_imgs, exposures)
-
+    return None
 
 def compute_optical_flow(ldr_imgs: List[np.ndarray], exposures: List[float]):
     pass
@@ -75,6 +77,14 @@ def get_patch_nums(width: int, height: int, config: Config):
     pass
 
 
+def adjust_exposure(imgs: List[np.ndarray], exposures: List[float]) -> List[np.ndarray]:
+    adjusted = []
+    max_exposure = max(exposures)
+    for i in range(len(imgs)):
+        adjusted.append(ldr_to_ldr(imgs[i], exposures[i], max_exposure))
+    return adjusted
+
+
 def ldr_to_ldr(ldr_img: np.ndarray, exposure_A: float, exposure_B: float) -> np.ndarray:
     return hdr_to_ldr(ldr_to_hdr(ldr_img, exposure_A), exposure_B)
 
@@ -83,9 +93,7 @@ def ldr_to_hdr(ldr_img: np.ndarray, exposure: float) -> np.ndarray:
     return np.power(ldr_img, GAMMA) / exposure
 
 
-def hdr_to_ldr(ldr_img: np.ndarray, exposure: float): -> np.ndarray:
+def hdr_to_ldr(ldr_img: np.ndarray, exposure: float) -> np.ndarray:
     ldr_img = ldr_img.astype(float) * exposure
     ldr_img = np.clip(ldr_img, 0, 1)
-    return np.power(ldr_img, (1/GAMMA))
-
-
+    return np.power(ldr_img, (1 / GAMMA))
