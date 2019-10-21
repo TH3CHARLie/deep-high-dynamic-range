@@ -3,8 +3,10 @@ DHDRCNN
 
 Configuration class
 """
+
+
 class Config:
-    
+
     PATCH_SIZE = 40
     STRIDE = 20
     CROP_SIZE = 50
