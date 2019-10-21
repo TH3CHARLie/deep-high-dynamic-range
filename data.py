@@ -3,6 +3,7 @@ import numpy as np
 import os
 import util
 from config import Config
+from typing import List, Set, Dict, Tuple, Optional
 
 def preprocess_training_data(config: Config):
     """
@@ -14,11 +15,11 @@ def preprocess_training_data(config: Config):
         exposures = read_exposure(scene_path)
         print(f"exposures: {exposures}")
         ldr_imgs, hdr_img = read_ldr_hdr_images(scene_path)
-        # inputs, label = compute_training_examples(ldr_imgs, exposures, hdr_img)
+        inputs, label = compute_training_examples(ldr_imgs, exposures, hdr_img)
         # write_training_examples(inputs, label, config.TRAINING_DATA_PATH, "TrainingSequence.h5")
 
 
-def read_exposure(path: str):
+def read_exposure(path: str) -> List[float]:
     """
     read exposure data from exposures.txt
 
@@ -28,7 +29,7 @@ def read_exposure(path: str):
     paths = [f.path for f in os.scandir(path) if f.name.endswith('.txt')]
     if len(paths) < 1:
         print("[read_exposure]: cannot find exposure file")
-        return None
+        return []
     exposure_file_path = paths[0]
     exposures = []
     with open(exposure_file_path) as f:
@@ -37,7 +38,7 @@ def read_exposure(path: str):
     return exposures
 
 
-def read_ldr_hdr_images(path: str):
+def read_ldr_hdr_images(path: str) -> Tuple[List[np.ndarray], np.ndarray]:
     paths = [f for f in os.scandir(path)]
     ldr_paths = [x.path for x in paths if x.name.endswith(".tif")]
     hdr_path = [x.path for x in paths if x.name.endswith(".hdr")]
@@ -52,9 +53,14 @@ def read_ldr_hdr_images(path: str):
     return ldr_images, hdr_image
 
 
-def compute_training_examples(ldr_imgs, exposures, hdr_img):
+def compute_training_examples(ldr_imgs: List[np.ndarray], exposures: List[float], hdr_img: np.ndarray):
     pass
 
 
 def writing_training_examples(inputs, label, path, filename):
     pass
+
+
+def get_patch_nums(width: int, height: int, config: Config):
+    pass
+
