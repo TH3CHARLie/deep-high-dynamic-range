@@ -4,7 +4,6 @@ import tensorflow as tf
 import cv2
 from model import DHDRCNN
 from config import Config
-from data import *
 
 
 def train_main(config: Config):
@@ -17,6 +16,4 @@ def train_main(config: Config):
 if __name__ == "__main__":
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
     cfg = Config()
-    preprocess_training_data(cfg)
-    # load_training_data(cfg)
-    # train_main(cfg)
+    train_main(cfg)
