@@ -1,6 +1,7 @@
 __pycache__
 .vscode/
 .DS_Store
-data/
+data/Training/
+data/Testing/
 reference/
 .mypy_cache/

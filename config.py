@@ -24,4 +24,4 @@ class Config:
 
     # data path
     TRAINING_RAW_DATA_PATH = "./data/Training/"
-    TRAINING_DATA_PATH = "./data/train/"
+    TRAINING_DATA_PATH = "./data/Training_Processed/"
