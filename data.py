@@ -2,9 +2,9 @@ import cv2
 import numpy as np
 import os
 import util
+from config import Config
 
-
-def preprocess_training_data(config):
+def preprocess_training_data(config: Config):
     """
     preprocess training data, pack it into h5 file
     """
@@ -18,7 +18,7 @@ def preprocess_training_data(config):
         # write_training_examples(inputs, label, config.TRAINING_DATA_PATH, "TrainingSequence.h5")
 
 
-def read_exposure(path):
+def read_exposure(path: str):
     """
     read exposure data from exposures.txt
 
@@ -37,8 +37,8 @@ def read_exposure(path):
     return exposures
 
 
-def read_ldr_hdr_images(path):
-    paths = [x for f in os.scandir(path)]
+def read_ldr_hdr_images(path: str):
+    paths = [f for f in os.scandir(path)]
     ldr_paths = [x.path for x in paths if x.name.endswith(".tif")]
     hdr_path = [x.path for x in paths if x.name.endswith(".hdr")]
     if len(ldr_paths) < 3 or len(hdr_path) < 1:

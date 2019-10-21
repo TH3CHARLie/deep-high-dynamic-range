@@ -7,7 +7,7 @@ from config import Config
 from data import *
 
 
-def train_main(config):
+def train_main(config: Config):
 
     model = DHDRCNN()
 
