@@ -3,7 +3,7 @@ DHDRCNN
 
 Configuration class
 """
-class Config(Object):
+class Config:
     
     PATCH_SIZE = 40
     STRIDE = 20
@@ -21,5 +21,5 @@ class Config(Object):
     ADAM_EPS = 1e-8
 
     # data path
-    TRAINING_RAW_DATA_PATH = "../data/Training/"
-    TRAINING_DATA_PATH = "../data/train/"
+    TRAINING_RAW_DATA_PATH = "./data/Training/"
+    TRAINING_DATA_PATH = "./data/train/"

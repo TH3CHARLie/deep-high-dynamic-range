@@ -16,5 +16,5 @@ if __name__ == "__main__":
   os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
   cfg = Config()
   preprocess_training_data(cfg)
-  load_training_data(cfg)
-  train_main(cfg)
+  # load_training_data(cfg)
+  # train_main(cfg)
