@@ -20,7 +20,7 @@ def read_dir(path: str, folder_only: bool = True) -> List[str]:
 
 
 def im2single(img: np.ndarray) -> np.ndarray:
-    """Map a integer image to single-precision float
+    """Convert a integer image to single-precision float
 
     Args:
         img: A integer image
@@ -33,7 +33,7 @@ def im2single(img: np.ndarray) -> np.ndarray:
 
 
 def im2double(img: np.ndarray) -> np.ndarray:
-    """Map a integer image to double-precision float
+    """Convert a integer image to double-precision float
 
     Args:
         img: A integer image
@@ -43,6 +43,18 @@ def im2double(img: np.ndarray) -> np.ndarray:
     """
     info = np.iinfo(img.dtype)
     return img.astype(np.float64) / info.max
+
+
+def float2int(img: np.ndarray, type) -> np.ndarray:
+    """Convert a float image to specific integer image
+
+    Args:
+        img: A single-precision float image
+    
+    Returns:
+        A uint16 image image
+    """
+    return (img * np.iinfo(type).max).astype(type)
 
 
 def compute_PSNR(input: np.ndarray, reference: np.ndarray) -> float:

@@ -182,6 +182,6 @@ def hdr_to_ldr(hdr_img: np.ndarray, exposure: float) -> np.ndarray:
     Returns:
         A LDR image
     """
-    hdr_img = hdr_img.astype(float) * exposure
+    hdr_img = hdr_img.astype(np.float32) * exposure
     hdr_img = np.clip(hdr_img, 0, 1)
     return np.power(hdr_img, (1 / GAMMA))
