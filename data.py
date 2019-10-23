@@ -80,6 +80,12 @@ def compute_training_examples(ldr_imgs: List[np.ndarray], exposures: List[float]
 
 def prepare_input_features(ldr_imgs: List[np.ndarray], exposures: List[float], hdr_img: np.ndarray, is_test: bool = False):
     warpped_ldr_imgs = compute_optical_flow(ldr_imgs, exposures)
+    nan_idx0 = np.isnan(warpped_ldr_imgs[0])
+    nan_idx2 = np.isnan(warpped_ldr_imgs[2])
+    warpped_ldr_imgs[0][nan_idx0]  = ldr_to_ldr(warpped_ldr_imgs[1][nan_idx0], exposures[1], exposures[0])
+    
+    warpped_ldr_imgs[2][nan_idx2] = ldr_to_ldr(warpped_ldr_imgs[1][nan_idx2], exposures[1], exposures[2])
+    
     return None
 
 
@@ -151,7 +157,8 @@ def warp_using_flow(img: np.ndarray, flow: np.ndarray) -> np.ndarray:
     flow = -flow
     flow[:, :, 0] += np.arange(w)
     flow[:, :, 1] += np.arange(h)[:, np.newaxis]
-    res = cv2.remap(img, flow, None, cv2.INTER_CUBIC, borderValue=np.nan)
+    # border value needs to fill all 3 channels
+    res = cv2.remap(img, flow, None, cv2.INTER_CUBIC, borderValue=np.array([np.nan, np.nan, np.nan]))
     return res
 
 
