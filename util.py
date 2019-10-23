@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from typing import List
-
+import cv2
 
 def read_dir(path: str, folder_only: bool = True) -> List[str]:
     """Read a directory
@@ -87,3 +87,16 @@ def draw_hsv(flow):
     hsv[...,2] = np.minimum(v*4, 255)
     bgr = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
     return bgr
+
+
+def crop_img(input: np.ndarray, pad: int) -> np.ndarray:
+    """Crop out image boundary
+
+    Args:
+        Input: A image
+        pad: A int value of cropped size
+    
+    Returns:
+        Cropped image
+    """
+    return input[pad : -pad, pad : -pad, :]
