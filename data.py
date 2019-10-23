@@ -77,8 +77,15 @@ def compute_training_examples(ldr_imgs: List[np.ndarray],
                               exposures: List[float], hdr_img: np.ndarray, config: Config):
     inputs, label = prepare_input_features(
         ldr_imgs, exposures, hdr_img, is_test=False)
+    # crop out boundary
     inputs = util.crop_img(inputs, config.CROP_SIZE)
     label = util.crop_img(label, config.CROP_SIZE)
+
+    # compute patches
+    h, w, _ = inputs.shape
+    num_patches = get_patch_nums(h, w, config)
+    
+    # generate patches
     
     return None
 
@@ -124,7 +131,8 @@ def prepare_input_features(ldr_imgs: List[np.ndarray], exposures: List[float],
     return (ldr_concate, hdr_img)
 
 
-def compute_optical_flow(ldr_imgs: List[np.ndarray], exposures: List[float]) -> List[np.ndarray]:
+def compute_optical_flow(
+        ldr_imgs: List[np.ndarray], exposures: List[float]) -> List[np.ndarray]:
     """compute optical flow and warp images
 
     Args:
@@ -197,15 +205,27 @@ def warp_using_flow(img: np.ndarray, flow: np.ndarray) -> np.ndarray:
     return res
 
 
+def get_patch_nums(height: int, width: int, config: Config):
+    """Compute number of patches
+
+    Args:
+        height: Image height
+        width: Image width
+        config: Config object
+    
+    Returns:
+        Number of patches in int
+    """
+    return (np.floor((width - config.PATCH_SIZE) / config.STRIDE) + 1) * \
+        (np.floor((height - config.PATCH_SIZE) / config.STRIDE) + 1)
+
+
 def writing_training_examples(inputs, label, path, filename):
     pass
 
 
-def get_patch_nums(width: int, height: int, config: Config):
-    pass
-
-
-def adjust_exposure(imgs: List[np.ndarray], exposures: List[float]) -> List[np.ndarray]:
+def adjust_exposure(imgs: List[np.ndarray],
+                    exposures: List[float]) -> List[np.ndarray]:
     """Adjust image exposure
 
     Args:
@@ -226,7 +246,8 @@ def adjust_exposure(imgs: List[np.ndarray], exposures: List[float]) -> List[np.n
     return adjusted
 
 
-def ldr_to_ldr(ldr_img: np.ndarray, exposure_src: float, exposure_dst: float) -> np.ndarray:
+def ldr_to_ldr(ldr_img: np.ndarray, exposure_src: float,
+               exposure_dst: float) -> np.ndarray:
     """Map a LDR image to a LDR image with different exposure
 
     Args:
