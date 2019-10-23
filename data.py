@@ -15,11 +15,17 @@ def preprocess_training_data(config: Config):
     scene_paths = util.read_dir(config.TRAINING_RAW_DATA_PATH)
     # make sure we read scene sequentially
     scene_paths = sorted(scene_paths)
-    for scene_path in scene_paths[0:1]:
+    cnt = 0
+    for scene_path in scene_paths:
         exposures = read_exposure(scene_path)
         ldr_imgs, hdr_img = read_ldr_hdr_images(scene_path)
-        compute_training_examples(ldr_imgs, exposures, hdr_img, config)
-        # write_training_examples(inputs, label, config.TRAINING_DATA_PATH, "TrainingSequence.h5")
+        inputs, label = compute_training_examples(
+            ldr_imgs, exposures, hdr_img, config)
+        cnt += inputs.shape[0]
+        print(f"processed scene: {scene_path}")
+        print(f"now image patches cnt: {cnt}")
+        # write_training_examples(inputs, label, config.TRAINING_DATA_PATH, scene_path)
+    print(f"total {cnt} patches")
 
 
 def read_exposure(path: str) -> List[float]:
@@ -83,7 +89,7 @@ def compute_training_examples(ldr_imgs: List[np.ndarray],
 
     # compute patches
     h, w, c = inputs.shape
-    num_patches = get_patch_nums(h, w, config)
+    num_patches = get_patch_nums(h, w, config.PATCH_SIZE, config.STRIDE)
 
     # generate patches
     input_patches = np.zeros(
@@ -110,8 +116,16 @@ def compute_training_examples(ldr_imgs: List[np.ndarray],
             augmented_inputs, config.PATCH_SIZE, config.STRIDE)
         cur_label_patches = get_patches(
             augmented_labels, config.PATCH_SIZE, config.STRIDE)
+        input_patches[i * num_patches: (i + 1) *
+                      num_patches, :, :, :] = cur_input_patches
+        label_patches[i * num_patches: (i + 1) *
+                      num_patches, :, :, :] = cur_label_patches
 
-    return None
+    selected_subset_idx = select_subset(
+        input_patches[:, :, :, 3: 6], config.PATCH_SIZE)
+    input_patches = input_patches[selected_subset_idx, :, :, :]
+    label_patches = label_patches[selected_subset_idx, :, :, :]
+    return input_patches, label_patches
 
 
 def prepare_input_features(ldr_imgs: List[np.ndarray], exposures: List[float],
@@ -229,7 +243,7 @@ def warp_using_flow(img: np.ndarray, flow: np.ndarray) -> np.ndarray:
     return res
 
 
-def get_patch_nums(height: int, width: int, config: Config):
+def get_patch_nums(height: int, width: int, patch_size: int, stride: int):
     """Compute number of patches
 
     Args:
@@ -240,8 +254,8 @@ def get_patch_nums(height: int, width: int, config: Config):
     Returns:
         Number of patches in int
     """
-    return int(np.floor((width - config.PATCH_SIZE) / config.STRIDE) + 1) * \
-        int(np.floor((height - config.PATCH_SIZE) / config.STRIDE) + 1)
+    return int(np.floor((width - patch_size) / stride) + 1) * \
+        int(np.floor((height - patch_size) / stride) + 1)
 
 
 def augment_data(inputs: np.ndarray, label: np.ndarray,
@@ -325,8 +339,59 @@ def geometric_augment(img: np.ndarray, idx: int) -> np.ndarray:
     return ops[idx](img)
 
 
-def get_patches(input, patch_size, stride):
-    return None
+def get_patches(inputs: np.ndarray, patch_size: int,
+                stride: int) -> np.ndarray:
+    """Get image patches
+
+    Args:
+        inputs: Input image
+        patch_size: Patch sidelength
+        stride: Stride
+
+    Returns:
+        Image patches
+    """
+    h, w, c = inputs.shape
+    num_patches = get_patch_nums(h, w, patch_size, stride)
+    patches = np.zeros(
+        (num_patches,
+         patch_size,
+         patch_size,
+         c),
+        dtype=np.float)
+    cnt = 0
+    for x in range(0, w - patch_size, stride):
+        for y in range(0, h - patch_size, stride):
+            patches[cnt, :, :, :] = inputs[y: y +
+                                           patch_size, x: x + patch_size, :]
+            cnt += 1
+    return patches
+
+
+def select_subset(input_patches: np.ndarray, patch_size: int) -> np.ndarray:
+    """Select a subset of image patches
+        Only select patches that are overexposed/underexpose(> 50%)
+
+    Args:
+        input_patches: Reference image part of input patch
+        patch_size: Int patch size
+
+    Returns:
+        Selected patches
+    """
+    threshold = 0.5 * patch_size * patch_size * 3
+    lower_bound = 0.2
+    upper_bound = 0.8
+
+    idx = np.greater(
+        input_patches,
+        upper_bound) | np.less(
+        input_patches,
+        lower_bound)
+    idx = np.sum(np.sum(np.sum(idx, axis=3), axis=2), axis=1)
+
+    subset_idx = np.where(idx > threshold)[0]
+    return subset_idx
 
 
 def writing_training_examples(inputs, label, path, filename):

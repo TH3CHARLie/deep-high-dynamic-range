@@ -14,6 +14,7 @@ class DHDRCNN(tf.keras.Model):
         self.conv4 = tf.keras.layers.Conv2D(9, (1, 1), activation='sigmoid', strides=(
             1, 1), padding='valid', kernel_initializer='zeros')
 
+
     def call(self, inputs):
         x1 = self.conv1(inputs)
         x2 = self.conv2(x1)
