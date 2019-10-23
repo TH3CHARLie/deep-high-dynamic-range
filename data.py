@@ -1,9 +1,9 @@
-import cv2
 import numpy as np
-import os
-import util
 from config import Config
-from typing import List, Set, Dict, Tuple, Optional
+from typing import List, Tuple
+import os
+import cv2
+import util
 
 GAMMA = 2.2
 
@@ -23,7 +23,7 @@ def preprocess_training_data(config: Config):
 
 
 def read_exposure(path: str) -> List[float]:
-    """Read exposure data from exposures.txt, 
+    """Read exposure data from exposures.txt,
 
     Args:
         path: A str folder path
@@ -53,7 +53,7 @@ def read_ldr_hdr_images(path: str) -> Tuple[List[np.ndarray], np.ndarray]:
         path: a str folder path
 
     Returns:
-        A tuple of 
+        A tuple of
             1: a list of LDR images in np.float32(0-1)
             2: a HDR image in np.float32(0-1)
     """
@@ -73,20 +73,52 @@ def read_ldr_hdr_images(path: str) -> Tuple[List[np.ndarray], np.ndarray]:
     return ldr_imgs, hdr_img
 
 
-def compute_training_examples(ldr_imgs: List[np.ndarray], exposures: List[float], hdr_img: np.ndarray, config: Config):
-    prepare_input_features(ldr_imgs, exposures, hdr_img)
+def compute_training_examples(ldr_imgs: List[np.ndarray],
+                              exposures: List[float], hdr_img: np.ndarray, config: Config):
+    inputs, label = prepare_input_features(
+        ldr_imgs, exposures, hdr_img, is_test=False)
     return None
 
 
-def prepare_input_features(ldr_imgs: List[np.ndarray], exposures: List[float], hdr_img: np.ndarray, is_test: bool = False):
+def prepare_input_features(ldr_imgs: List[np.ndarray], exposures: List[float],
+                           hdr_img: np.ndarray, is_test: bool = False):
+    """Preprocess LDR/HDR images
+    Warp and concate images
+
+    Args:
+        ldr_imgs: A list of 3 LDR images
+        exposures: A list of 3 corresponding exposure values
+        hdr_img: A HDR image
+        is_test: Boolean indicate whether change HDR image
+
+    Returns:
+        A tuple of
+            1: A h * w * 18 matrix of concatenated LDR/converted HDR
+            2: A reference HDR image
+    """
     warpped_ldr_imgs = compute_optical_flow(ldr_imgs, exposures)
     nan_idx0 = np.isnan(warpped_ldr_imgs[0])
     nan_idx2 = np.isnan(warpped_ldr_imgs[2])
-    warpped_ldr_imgs[0][nan_idx0]  = ldr_to_ldr(warpped_ldr_imgs[1][nan_idx0], exposures[1], exposures[0])
-    
-    warpped_ldr_imgs[2][nan_idx2] = ldr_to_ldr(warpped_ldr_imgs[1][nan_idx2], exposures[1], exposures[2])
-    
-    return None
+    warpped_ldr_imgs[0][nan_idx0] = ldr_to_ldr(
+        warpped_ldr_imgs[1][nan_idx0], exposures[1], exposures[0])
+
+    warpped_ldr_imgs[2][nan_idx2] = ldr_to_ldr(
+        warpped_ldr_imgs[1][nan_idx2], exposures[1], exposures[2])
+
+    if not is_test:
+        dark_ref = np.less(warpped_ldr_imgs[1], 0.5)
+        bad_ref = (dark_ref & nan_idx2) | (~dark_ref & nan_idx0)
+        hdr_img[bad_ref] = ldr_to_hdr(
+            warpped_ldr_imgs[1][bad_ref], exposures[1])
+
+    ldr_concate = warpped_ldr_imgs[0]
+    for i in range(1, 3):
+        ldr_concate = np.concatenate(
+            (ldr_concate, warpped_ldr_imgs[i]), axis=2)
+    for i in range(3):
+        ldr_concate = np.concatenate(
+            (ldr_concate, ldr_to_hdr(warpped_ldr_imgs[i], exposures[i])), axis=2)
+    return (ldr_concate, hdr_img)
 
 
 def compute_optical_flow(ldr_imgs: List[np.ndarray], exposures: List[float]) -> List[np.ndarray]:
@@ -99,7 +131,7 @@ def compute_optical_flow(ldr_imgs: List[np.ndarray], exposures: List[float]) -> 
     Returns:
         A list of 3 images warpped using optical flow
 
-    Notice: 
+    Notice:
         The middle level exposure image is used
         as reference and not warpped
     """
@@ -130,14 +162,13 @@ def compute_flow(prev: np.ndarray, next: np.ndarray) -> np.ndarray:
 
     Notice:
         The algorithm can be replaced as long as
-        the interface stays unchanged 
+        the interface stays unchanged
     """
     prev_gray = cv2.cvtColor(prev, cv2.COLOR_BGR2GRAY)
     next_gray = cv2.cvtColor(next, cv2.COLOR_BGR2GRAY)
     prev_gray = util.float2int(prev_gray, np.uint16)
     next_gray = util.float2int(next_gray, np.uint16)
 
-    # TODO: investigate channel layout
     return cv2.calcOpticalFlowFarneback(prev_gray, next_gray, flow=None,
                                         pyr_scale=0.5, levels=3, winsize=15, iterations=3,
                                         poly_n=7, poly_sigma=1.2, flags=0)
@@ -158,7 +189,8 @@ def warp_using_flow(img: np.ndarray, flow: np.ndarray) -> np.ndarray:
     flow[:, :, 0] += np.arange(w)
     flow[:, :, 1] += np.arange(h)[:, np.newaxis]
     # border value needs to fill all 3 channels
-    res = cv2.remap(img, flow, None, cv2.INTER_CUBIC, borderValue=np.array([np.nan, np.nan, np.nan]))
+    res = cv2.remap(img, flow, None, cv2.INTER_CUBIC,
+                    borderValue=np.array([np.nan, np.nan, np.nan]))
     return res
 
 
