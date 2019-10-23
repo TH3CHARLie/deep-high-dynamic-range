@@ -153,12 +153,16 @@ def prepare_input_features(ldr_imgs: List[np.ndarray], exposures: List[float],
     warpped_ldr_imgs[2][nan_idx2] = ldr_to_ldr(
         warpped_ldr_imgs[1][nan_idx2], exposures[1], exposures[2])
 
+    # add clipping to avoid minus value after warpping
+    warpped_ldr_imgs[0] = np.clip(warpped_ldr_imgs[0], 0, 1)
+    warpped_ldr_imgs[2] = np.clip(warpped_ldr_imgs[2], 0, 1)
+    
     if not is_test:
         dark_ref = np.less(warpped_ldr_imgs[1], 0.5)
         bad_ref = (dark_ref & nan_idx2) | (~dark_ref & nan_idx0)
         hdr_img[bad_ref] = ldr_to_hdr(
             warpped_ldr_imgs[1][bad_ref], exposures[1])
-
+    
     ldr_concate = warpped_ldr_imgs[0]
     for i in range(1, 3):
         ldr_concate = np.concatenate(
@@ -166,6 +170,7 @@ def prepare_input_features(ldr_imgs: List[np.ndarray], exposures: List[float],
     for i in range(3):
         ldr_concate = np.concatenate(
             (ldr_concate, ldr_to_hdr(warpped_ldr_imgs[i], exposures[i])), axis=2)
+
     return (ldr_concate, hdr_img)
 
 
