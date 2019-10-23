@@ -82,11 +82,35 @@ def compute_training_examples(ldr_imgs: List[np.ndarray],
     label = util.crop_img(label, config.CROP_SIZE)
 
     # compute patches
-    h, w, _ = inputs.shape
+    h, w, c = inputs.shape
     num_patches = get_patch_nums(h, w, config)
-    
+
     # generate patches
-    
+    input_patches = np.zeros(
+        (num_patches *
+         config.NUM_AUGMENT,
+         config.PATCH_SIZE,
+         config.PATCH_SIZE,
+         c),
+        dtype=np.float)
+    label_patches = np.zeros(
+        (num_patches *
+         config.NUM_AUGMENT,
+         config.PATCH_SIZE,
+         config.PATCH_SIZE,
+         3),
+        dtype=np.float)
+
+    augument_idx = np.random.permutation(config.NUM_TOTAL_AUGMENT)
+
+    for i in range(config.NUM_AUGMENT):
+        idx = augument_idx[i]
+        augmented_inputs, augmented_labels = augment_data(inputs, label, idx)
+        cur_input_patches = get_patches(
+            augmented_inputs, config.PATCH_SIZE, config.STRIDE)
+        cur_label_patches = get_patches(
+            augmented_labels, config.PATCH_SIZE, config.STRIDE)
+
     return None
 
 
@@ -212,12 +236,97 @@ def get_patch_nums(height: int, width: int, config: Config):
         height: Image height
         width: Image width
         config: Config object
-    
+
     Returns:
         Number of patches in int
     """
-    return (np.floor((width - config.PATCH_SIZE) / config.STRIDE) + 1) * \
-        (np.floor((height - config.PATCH_SIZE) / config.STRIDE) + 1)
+    return int(np.floor((width - config.PATCH_SIZE) / config.STRIDE) + 1) * \
+        int(np.floor((height - config.PATCH_SIZE) / config.STRIDE) + 1)
+
+
+def augment_data(inputs: np.ndarray, label: np.ndarray,
+                 idx: int) -> Tuple[np.ndarray, np.ndarray]:
+    """Augment the data using specific method
+
+    Args:
+        inputs: Concatenated LDR image
+        label: HDR image
+        idx: Data augmentation method index
+
+    Returns:
+        A tuple of
+            1: Augmented LDR image
+            2: Augmented HDR image
+    """
+    NUM_COLOR_AUGMENT = 6
+    geometric_idx = idx // NUM_COLOR_AUGMENT
+    color_idx = idx % NUM_COLOR_AUGMENT
+
+    # since inputs is w * h * 18,
+    # loop through all 6 images
+    for i in range(6):
+        cur_img = inputs[:, :, i * 3: (i + 1) * 3]
+        cur_img = geometric_augment(
+            color_augment(cur_img, color_idx), geometric_idx)
+        if i == 0:
+            augmented_inputs = cur_img
+        else:
+            augmented_inputs = np.concatenate(
+                (augmented_inputs, cur_img), axis=2)
+
+    # apply same augmentation on label
+    augmented_label = geometric_augment(
+        color_augment(label, color_idx), geometric_idx)
+
+    return augmented_inputs, augmented_label
+
+
+def color_augment(img: np.ndarray, idx: int) -> np.ndarray:
+    """Apply color augmentation by changing channel orders
+
+    Args:
+        img: Input image
+        idx: Int index between [0, 6)
+
+    Returns:
+        Reordered image
+    """
+    orders = [
+        [0, 1, 2],
+        [0, 2, 1],
+        [1, 0, 2],
+        [1, 2, 0],
+        [2, 1, 0],
+        [2, 0, 1]
+    ]
+    return img[:, :, orders[idx]]
+
+
+def geometric_augment(img: np.ndarray, idx: int) -> np.ndarray:
+    """Apply geometric augmentation by rotation or mirror
+
+    Args:
+        img: Input image
+        idx: Int index between [0, 8)
+
+    Returns:
+        Augmented image
+    """
+    ops = [
+        lambda x: x,
+        lambda x: np.fliplr(x),
+        lambda x: np.flipud(x),
+        lambda x: np.rot90(x, k=2),
+        lambda x: np.rot90(x, k=3),
+        lambda x: np.fliplr(np.rot90(x, k=3)),
+        lambda x: np.flipud(np.rot90(x, k=3)),
+        lambda x: np.rot90(x, k=1),
+    ]
+    return ops[idx](img)
+
+
+def get_patches(input, patch_size, stride):
+    return None
 
 
 def writing_training_examples(inputs, label, path, filename):

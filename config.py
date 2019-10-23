@@ -7,13 +7,13 @@ Configuration class
 
 class Config:
 
-    PATCH_SIZE = 40
-    STRIDE = 20
-    CROP_SIZE = 50
-    BATCH_SIZE = 20
-    NUM_AUGMENT = 20
-    NUM_TOTAL_AUGMENT = 48
-    BORDER = 6
+    PATCH_SIZE: int = 40
+    STRIDE: int = 20
+    CROP_SIZE: int = 50
+    BATCH_SIZE: int = 20
+    NUM_AUGMENT: int = 10
+    NUM_TOTAL_AUGMENT: int = 48
+    BORDER: int = 6
     EPS = 1e-6
 
     # Adam optimizer parameters
