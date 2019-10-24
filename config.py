@@ -15,6 +15,8 @@ class Config:
     NUM_TOTAL_AUGMENT: int = 48
     BORDER: int = 6
     EPS = 1e-6
+    ITERATION = 2000000
+    PREFETCH = 1
 
     # Adam optimizer parameters
     ADAM_LEARNING_RATE = 0.0001
