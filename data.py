@@ -18,7 +18,7 @@ def preprocess_training_data(config: Config):
     # make sure we read scene sequentially
     scene_paths = sorted(scene_paths)
     cnt = 0
-    for scene_path in scene_paths[10:11]:
+    for scene_path in scene_paths:
         exposures = read_exposure(scene_path)
         ldr_imgs, hdr_img = read_ldr_hdr_images(scene_path)
         inputs, label = compute_training_examples(
