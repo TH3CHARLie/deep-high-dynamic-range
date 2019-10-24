@@ -1,9 +1,11 @@
 import numpy as np
+import tensorflow as tf
 from config import Config
 from typing import List, Tuple
 import os
 import cv2
 import util
+import pathlib
 
 GAMMA = 2.2
 
@@ -16,7 +18,7 @@ def preprocess_training_data(config: Config):
     # make sure we read scene sequentially
     scene_paths = sorted(scene_paths)
     cnt = 0
-    for scene_path in scene_paths:
+    for scene_path in scene_paths[10:11]:
         exposures = read_exposure(scene_path)
         ldr_imgs, hdr_img = read_ldr_hdr_images(scene_path)
         inputs, label = compute_training_examples(
@@ -24,7 +26,8 @@ def preprocess_training_data(config: Config):
         cnt += inputs.shape[0]
         print(f"processed scene: {scene_path}")
         print(f"now image patches cnt: {cnt}")
-        # write_training_examples(inputs, label, config.TRAINING_DATA_PATH, scene_path)
+        
+        write_training_examples(inputs, label, config.TRAINING_DATA_PATH, scene_path)
     print(f"total {cnt} patches")
 
 
@@ -98,14 +101,14 @@ def compute_training_examples(ldr_imgs: List[np.ndarray],
          config.PATCH_SIZE,
          config.PATCH_SIZE,
          c),
-        dtype=np.float)
+        dtype=np.float32)
     label_patches = np.zeros(
         (num_patches *
          config.NUM_AUGMENT,
          config.PATCH_SIZE,
          config.PATCH_SIZE,
          3),
-        dtype=np.float)
+        dtype=np.float32)
 
     augument_idx = np.random.permutation(config.NUM_TOTAL_AUGMENT)
 
@@ -363,7 +366,7 @@ def get_patches(inputs: np.ndarray, patch_size: int,
          patch_size,
          patch_size,
          c),
-        dtype=np.float)
+        dtype=np.float32)
     cnt = 0
     for x in range(0, w - patch_size, stride):
         for y in range(0, h - patch_size, stride):
@@ -399,8 +402,56 @@ def select_subset(input_patches: np.ndarray, patch_size: int) -> np.ndarray:
     return subset_idx
 
 
-def writing_training_examples(inputs, label, path, filename):
-    pass
+def serialize_example(inputs, label):
+    feature = {
+        "inputs": util.tf_records_bytes_feature(inputs),
+        "label": util.tf_records_bytes_feature(label)
+    }
+
+    example_proto = tf.train.Example(features=tf.train.Features(feature=feature))
+    return example_proto.SerializeToString()
+
+
+def write_training_examples(inputs: np.ndarray, label: np.ndarray, path: str, filename: str):
+    n = inputs.shape[0]
+    filename = filename.split('/')[-1]
+    
+    if not os.path.exists(path):
+        pathlib.Path(path).mkdir(parents=True, exist_ok=True)
+    
+    filename = path + "Scene" + filename + "_{}.tfrecords"
+    
+    filename_suffix_cnt = 0
+    write_cnt = 0
+    while (write_cnt < n):  
+        cur_filename = filename.format(filename_suffix_cnt)
+        print(f"[writing_training_examples]: writing {cur_filename}")
+        with tf.io.TFRecordWriter(cur_filename) as writer:
+            for i in range(write_cnt, min(write_cnt + 500, n)):
+                cur_inputs_bytes = inputs[i, :, :, :].tostring()
+                cur_label_bytes = label[i, :, :, :].tostring()
+                
+                example = serialize_example(cur_inputs_bytes, cur_label_bytes)
+                writer.write(example)
+        write_cnt += 500
+        filename_suffix_cnt += 1
+    
+
+def read_tf_record(serialized_example):
+    feature = {
+        "inputs": tf.io.FixedLenFeature((), tf.string),
+        "label": tf.io.FixedLenFeature((), tf.string),
+    }
+
+    example = tf.io.parse_single_example(serialized_example, feature)
+    inputs = tf.reshape(tf.io.decode_raw(example['inputs'],out_type=tf.float32), [40, 40, 18])
+    label = tf.reshape(tf.io.decode_raw(example['label'], out_type=tf.float32), [40, 40, 3])
+    return inputs, label
+
+def read_training_examples(files):
+    tf_record_dataset = tf.data.TFRecordDataset(files)
+    parsed_dataset = tf_record_dataset.map(read_tf_record)
+    return parsed_dataset
 
 
 def adjust_exposure(imgs: List[np.ndarray],

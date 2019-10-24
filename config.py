@@ -24,4 +24,6 @@ class Config:
 
     # data path
     TRAINING_RAW_DATA_PATH = "./data/Training/"
-    TRAINING_DATA_PATH = "./data/Training_Processed/"
+    TRAINING_DATA_PATH = "./tf-data/train/"
+    TEST_RAW_DATA_PATH = "./data/Test/"
+    TEST_DATA_PATH = "./tf-data/test/"
