@@ -33,10 +33,10 @@ def train_main(config: Config):
     if not os.path.exists(config.SAVE_PATH):
         pathlib.Path(config.SAVE_PATH + time).mkdir(parents=True, exist_ok=True)
     if not os.path.exists(config.TENSORBOARD_PATH):
-        pathlib.Path(config.TENSORBOARD_PATH + time).mkdir(parents=True, exist_ok=True)
+        pathlib.Path(config.TENSORBOARD_PATH).mkdir(parents=True, exist_ok=True)
     
     checkpoint = tf.train.Checkpoint(myModel=model)
-    summary_writer = tf.summary.create_file_writer(config.TENSORBOARD_PATH + time) 
+    summary_writer = tf.summary.create_file_writer(config.TENSORBOARD_PATH) 
     optimizer = tf.keras.optimizers.Adam(
         learning_rate=config.ADAM_LEARNING_RATE,
         beta_1=config.ADAM_BETA1,
