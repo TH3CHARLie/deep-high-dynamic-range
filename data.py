@@ -31,6 +31,10 @@ def preprocess_training_data(config: Config):
     print(f"total {cnt} patches")
 
 
+def preprocess_test_data(config: Config):
+    
+
+
 def read_exposure(path: str) -> List[float]:
     """Read exposure data from exposures.txt,
 

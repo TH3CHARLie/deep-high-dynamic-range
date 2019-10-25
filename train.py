@@ -10,7 +10,7 @@ import pathlib
 
 MU = 5000
 def range_compress(img):
-    return tf.math.log(1 + MU * img) / tf.math.log(1 + MU)
+    return tf.math.log(1.0 + MU * img) / tf.math.log(1.0 + MU)
 
 
 class CustomLossFunction(tf.keras.losses.Loss):

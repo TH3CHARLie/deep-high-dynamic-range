@@ -4,3 +4,4 @@ from data import preprocess_training_data
 if __name__ == "__main__":
     config = Config()
     preprocess_training_data(config)
+    # preprocess_test_data(config) # TODO:
