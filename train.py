@@ -41,6 +41,7 @@ def train_main(config: Config):
     # transform dataset
     dataset = dataset.shuffle(120).batch(config.BATCH_SIZE)
     
+    global_step = 0
     for epoch in range(2):
         print('Start of epoch %d' % (epoch, ))
 
@@ -49,7 +50,7 @@ def train_main(config: Config):
                 outputs = model(inputs_batch)
                 loss_value = loss_function(label_batch, outputs)
                 with summary_writer.as_default():
-                    tf.summary.scalar("loss", loss_value, step=step) 
+                    tf.summary.scalar("loss", loss_value, step=global_step) 
             
             grads = tape.gradient(loss_value, model.trainable_weights)
 
@@ -59,6 +60,7 @@ def train_main(config: Config):
                 print('Seen so far: %s samples' % ((step + 1) * config.BATCH_SIZE))
                 print('Saving the models')
                 checkpoint.save(config.SAVE_PATH + "model.ckpt")
+            global_step += 1
                 
 if __name__ == "__main__":
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
