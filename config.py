@@ -29,3 +29,5 @@ class Config:
     TRAINING_DATA_PATH = "./tf-data/train/"
     TEST_RAW_DATA_PATH = "./data/Test/"
     TEST_DATA_PATH = "./tf-data/test/"
+
+    SAVE_PATH = "./save/"
