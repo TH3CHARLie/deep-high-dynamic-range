@@ -32,7 +32,7 @@ def preprocess_training_data(config: Config):
 
 
 def preprocess_test_data(config: Config):
-    
+    pass
 
 
 def read_exposure(path: str) -> List[float]:
