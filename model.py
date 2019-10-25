@@ -1,9 +1,10 @@
 import tensorflow as tf
 
+output_shape = {'direct': 3, 'WE': 9, 'WIE': '18'}
 
 class DHDRCNN(tf.keras.Model):
 
-    def __init__(self):
+    def __init__(self, model_type):
         super(DHDRCNN, self).__init__()
         self.conv1 = tf.keras.layers.Conv2D(100, (7, 7), activation='relu', strides=(
             1, 1), padding='same', kernel_initializer='zeros')
@@ -11,8 +12,8 @@ class DHDRCNN(tf.keras.Model):
             1, 1), padding='same', kernel_initializer='zeros')
         self.conv3 = tf.keras.layers.Conv2D(50, (3, 3), activation='relu', strides=(
             1, 1), padding='same', kernel_initializer='zeros')
-        self.conv4 = tf.keras.layers.Conv2D(3, (1, 1), activation='sigmoid', strides=(
-            1, 1), padding='same', kernel_initializer='zeros')
+        self.conv4 = tf.keras.layers.Conv2D(output_shape[model_type], (1, 1), activation='sigmoid', strides=(
+                1, 1), padding='same', kernel_initializer='zeros')
 
 
     def call(self, inputs):

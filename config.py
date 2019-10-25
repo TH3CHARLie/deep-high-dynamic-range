@@ -31,4 +31,4 @@ class Config:
     TEST_DATA_PATH = "./tf-data/test/"
 
     SAVE_PATH = "./save/"
-    TENSORBOARD_PATH = "./tensorboard"
+    TENSORBOARD_PATH = "./tensorboard/"
