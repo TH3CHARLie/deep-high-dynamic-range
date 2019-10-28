@@ -4,7 +4,7 @@ import os
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
 import tensorflow as tf
 import cv2
-from model import DHDRCNN
+from model import create_model_and_loss
 from config import Config
 from data import read_training_examples
 import util
@@ -12,23 +12,11 @@ import pathlib
 import sys
 from datetime import datetime
 
-MU = 5000
-def range_compress(img):
-    return tf.math.log(1.0 + MU * img) / tf.math.log(1.0 + MU)
-
-
-class DirectLossFunction(tf.keras.losses.Loss):
-    def call(self, y_true, y_pred):
-        return tf.reduce_sum(tf.square(range_compress(y_true) - range_compress(y_pred)))
-
-class WELossFunction(tf.keras.losses.Loss):
-    def call(self, y_true, y_pred):
-        pass
 
 def train_main(config: Config):
     model_type = sys.argv[1]
 
-    model = DHDRCNN(model_type)
+    model, loss_function = create_model_and_loss(model_type)
     time = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
     if not os.path.exists(config.SAVE_PATH):
         pathlib.Path(config.SAVE_PATH + time).mkdir(parents=True, exist_ok=True)
@@ -43,12 +31,6 @@ def train_main(config: Config):
         beta_2=config.ADAM_BETA2)
     paths = util.read_dir(config.TRAINING_DATA_PATH, folder_only=False)
     
-    if model_type == 'direct':
-        loss_function = DirectLossFunction()
-    elif model_type == 'WE':
-        loss_function = WELossFunction()
-    else:
-        pass # TODO:
     # load tf record files into tf dataseat
     dataset = read_training_examples(paths)
     # transform dataset
