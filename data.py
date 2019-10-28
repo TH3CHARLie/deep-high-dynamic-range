@@ -408,8 +408,8 @@ def select_subset(input_patches: np.ndarray, patch_size: int) -> np.ndarray:
 
 def serialize_example(inputs, label):
     feature = {
-        "inputs": util.tf_records_bytes_feature(inputs),
-        "label": util.tf_records_bytes_feature(label)
+        "inputs": tf_records_bytes_feature(inputs),
+        "label": tf_records_bytes_feature(label)
     }
 
     example_proto = tf.train.Example(features=tf.train.Features(feature=feature))
@@ -522,3 +522,9 @@ def hdr_to_ldr(hdr_img: np.ndarray, exposure: float) -> np.ndarray:
     hdr_img = hdr_img.astype(np.float32) * exposure
     hdr_img = np.clip(hdr_img, 0, 1)
     return np.power(hdr_img, (1 / GAMMA))
+
+
+def tf_records_bytes_feature(value):
+    if isinstance(value, type(tf.constant(0))):
+        value = value.numpy()
+    return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))

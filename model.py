@@ -48,3 +48,22 @@ def create_model_and_loss(model_type: str):
         return DHDRCNN("WE"), WELossFunction()
     elif model_type.lower() == "wie":
         return DHDRCNN("WIE"), WIELossFunction()
+
+
+def tf_compute_PSNR(input, reference):
+    """Compute Peak signal-to-noise ratio(PSNR)
+
+    Args:
+        input: A produced image
+        reference: A reference image 
+    
+    Returns:
+        Error in float
+    """
+
+    num_pixels = input.size
+    squared_error = tf.reduce_sum(tf.square(input - reference)) / num_pixels
+    numerator = tf.math.log(1.0 / squared_error)
+    denominator = tf.math.log(tf.constant(10, dtype=numerator.dtype))
+    error = 10.0 * numerator / denominator
+    return error

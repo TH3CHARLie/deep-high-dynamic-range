@@ -2,7 +2,6 @@ import os
 import numpy as np
 from typing import List
 import cv2
-import tensorflow as tf
 
 
 def read_dir(path: str, folder_only: bool = True) -> List[str]:
@@ -59,7 +58,7 @@ def float2int(img: np.ndarray, type) -> np.ndarray:
     return (img * np.iinfo(type).max).astype(type)
 
 
-def compute_PSNR(input: np.ndarray, reference: np.ndarray) -> float:
+def np_compute_PSNR(input: np.ndarray, reference: np.ndarray) -> float:
     """Compute Peak signal-to-noise ratio(PSNR)
 
     Args:
@@ -102,9 +101,3 @@ def crop_img(input: np.ndarray, pad: int) -> np.ndarray:
         Cropped image
     """
     return input[pad : -pad, pad : -pad, :]
-
-
-def tf_records_bytes_feature(value):
-    if isinstance(value, type(tf.constant(0))):
-        value = value.numpy()
-    return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
