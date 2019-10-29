@@ -6,6 +6,7 @@ Configuration class
 
 MU = 5000
 GAMMA = 2.2
+WEIGHT_EPS = 1e-6
 
 class Config:
 

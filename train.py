@@ -14,7 +14,7 @@ import os
 def train_main(config: Config):
     model_type = sys.argv[1]
 
-    model, loss_function = create_model_and_loss(model_type)
+    model, loss_function_generator = create_model_and_loss(model_type)
     time = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
     if not os.path.exists(config.SAVE_PATH):
         pathlib.Path(
@@ -50,6 +50,7 @@ def train_main(config: Config):
         for step, (inputs_batch, label_batch) in enumerate(dataset):
             with tf.GradientTape() as tape:
                 outputs = model(inputs_batch)
+                loss_function = loss_function_generator(inputs_batch)
                 loss_value = loss_function(label_batch, outputs)
                 with summary_writer.as_default():
                     tf.summary.scalar("loss", loss_value, step=global_step)

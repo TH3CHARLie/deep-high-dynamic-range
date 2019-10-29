@@ -1,7 +1,7 @@
 import tensorflow as tf
-from config import MU
+from config import MU, WEIGHT_EPS
 
-output_shape = {'direct': 3, 'WE': 9, 'WIE': '18'}
+output_shape = {'direct': 3, 'WE': 9, 'WIE': 18}
 
 
 class DHDRCNN(tf.keras.Model):
@@ -24,20 +24,41 @@ class DHDRCNN(tf.keras.Model):
         return self.conv4(x3)
 
 
-class DirectLossFunction(tf.keras.losses.Loss):
-    def call(self, y_true, y_pred):
+def DirectLossFunctionGenerator(inputs):
+    def loss_function(y_true, y_pred):
         return tf.reduce_sum(
             tf.square(range_compress(y_true) - range_compress(y_pred)))
+    return loss_function
 
 
-class WELossFunction(tf.keras.losses.Loss):
-    def call(self, y_true, y_pred):
-        pass
+def WELossFunctionGenerator(inputs):
+    def loss_function(y_true, y_pred):
+        img1 = inputs[:, :, :, 9:12]
+        img2 = inputs[:, :, :, 12:15]
+        img3 = inputs[:, :, :, 15:18]
+        weight1 = y_pred[:, :, :, 0:3]
+        weight2 = y_pred[:, :, :, 3:6]
+        weight3 = y_pred[:, :, :, 6:9]
+        total_weights = weight1 + weight2 + weight3 + WEIGHT_EPS
+        blended = (img1 * weight1 + img2 * weight2 + img3 * weight3) / total_weights
+        return tf.reduce_sum(
+            tf.square(range_compress(y_true) - range_compress(blended)))
+    return loss_function
 
 
-class WIELossFunction(tf.keras.losses.Loss):
-    def call(self, y_true, y_pred):
-        pass
+def WIELossFunctionGenerator(inputs):
+    def loss_function(y_true, y_pred):
+        img1 = y_pred[:, :, :, 9:12]
+        img2 = y_pred[:, :, :, 12:15]
+        img3 = y_pred[:, :, :, 15:18]
+        weight1 = y_pred[:, :, :, 0:3]
+        weight2 = y_pred[:, :, :, 3:6]
+        weight3 = y_pred[:, :, :, 6:9]
+        total_weights = weight1 + weight2 + weight3 + WEIGHT_EPS
+        blended = (img1 * weight1 + img2 * weight2 + img3 * weight3) / total_weights
+        return tf.reduce_sum(
+            tf.square(range_compress(y_true) - range_compress(blended)))
+    return loss_function
 
 
 def range_compress(img):
@@ -46,11 +67,11 @@ def range_compress(img):
 
 def create_model_and_loss(model_type: str):
     if model_type.lower() == "direct":
-        return DHDRCNN("direct"), DirectLossFunction()
+        return DHDRCNN("direct"), DirectLossFunctionGenerator
     elif model_type.lower() == "we":
-        return DHDRCNN("WE"), WELossFunction()
+        return DHDRCNN("WE"), WELossFunctionGenerator
     elif model_type.lower() == "wie":
-        return DHDRCNN("WIE"), WIELossFunction()
+        return DHDRCNN("WIE"), WIELossFunctionGenerator
 
 
 def tf_compute_PSNR(input, reference):
