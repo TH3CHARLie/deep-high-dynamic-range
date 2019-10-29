@@ -25,6 +25,15 @@ class DHDRCNN(tf.keras.Model):
 
 
 def DirectLossFunctionGenerator(inputs):
+    """Direct loss
+    See Section 3.2(1) for more details
+
+    Args:
+        inputs: A input batch(no use)
+
+    Returns:
+        direct architecture loss function
+    """
     def loss_function(y_true, y_pred):
         return tf.reduce_sum(
             tf.square(range_compress(y_true) - range_compress(y_pred)))
@@ -32,6 +41,15 @@ def DirectLossFunctionGenerator(inputs):
 
 
 def WELossFunctionGenerator(inputs):
+    """Weighted Estimator(WE) loss
+    See Section 3.2(2) for more details
+
+    Args:
+        inputs: A input batch
+
+    Returns:
+        WE architecture loss function
+    """
     def loss_function(y_true, y_pred):
         img1 = inputs[:, :, :, 9:12]
         img2 = inputs[:, :, :, 12:15]
@@ -40,13 +58,23 @@ def WELossFunctionGenerator(inputs):
         weight2 = y_pred[:, :, :, 3:6]
         weight3 = y_pred[:, :, :, 6:9]
         total_weights = weight1 + weight2 + weight3 + WEIGHT_EPS
-        blended = (img1 * weight1 + img2 * weight2 + img3 * weight3) / total_weights
+        blended = (img1 * weight1 + img2 * weight2 +
+                   img3 * weight3) / total_weights
         return tf.reduce_sum(
             tf.square(range_compress(y_true) - range_compress(blended)))
     return loss_function
 
 
 def WIELossFunctionGenerator(inputs):
+    """Weight and Image Estimator(WIE) loss
+    See Section 3.2(3) for more details
+
+    Args:
+        inputs: A input batch(no use)
+
+    Returns:
+        WIE architecture loss function
+    """
     def loss_function(y_true, y_pred):
         img1 = y_pred[:, :, :, 9:12]
         img2 = y_pred[:, :, :, 12:15]
@@ -55,17 +83,36 @@ def WIELossFunctionGenerator(inputs):
         weight2 = y_pred[:, :, :, 3:6]
         weight3 = y_pred[:, :, :, 6:9]
         total_weights = weight1 + weight2 + weight3 + WEIGHT_EPS
-        blended = (img1 * weight1 + img2 * weight2 + img3 * weight3) / total_weights
+        blended = (img1 * weight1 + img2 * weight2 +
+                   img3 * weight3) / total_weights
         return tf.reduce_sum(
             tf.square(range_compress(y_true) - range_compress(blended)))
     return loss_function
 
 
 def range_compress(img):
+    """Differentiable tonemapping operator
+
+    Args:
+        img: input image/batch of images
+
+    Returns:
+        Tonemapped images
+    """
     return tf.math.log(1.0 + MU * img) / tf.math.log(1.0 + MU)
 
 
 def create_model_and_loss(model_type: str):
+    """Create CNN model and corresponding loss according to type
+
+    Args:
+        model_type: str of "direct"/"we"/"wie"
+
+    Returns:
+        A tuple of
+            1: CNN model with specific channels
+            2: Corresponding loss function generator function
+    """
     if model_type.lower() == "direct":
         return DHDRCNN("direct"), DirectLossFunctionGenerator
     elif model_type.lower() == "we":

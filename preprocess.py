@@ -7,7 +7,7 @@ import os
 
 def preprocess_training_data(config: Config):
     """
-    preprocess training data
+    Preprocess training data
     """
     scene_paths = util.read_dir(config.TRAINING_RAW_DATA_PATH)
     # make sure we read scene sequentially
@@ -28,6 +28,9 @@ def preprocess_training_data(config: Config):
 
 
 def preprocess_test_data(config: Config):
+    """
+    Preprocess test data
+    """
     scene_paths = util.read_dir(config.TEST_RAW_DATA_PATH)
     scene_paths = [util.read_dir(p) for p in scene_paths]
     scene_paths = [p for p in chain.from_iterable(scene_paths)]
