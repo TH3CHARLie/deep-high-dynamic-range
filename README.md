@@ -5,7 +5,6 @@ Tensorflow implementation of SIGGRAPH 17 paper: Deep High Dynamic Range Imaging 
 ## TODO
 
 - [ ] multiple GPUs
-- [ ] validation set(10% paths from training paths)
 - [ ] PSNR evaluation
 - [ ] test preprocess
 

@@ -9,6 +9,7 @@ import cv2
 import tensorflow as tf
 import numpy as np
 import os
+from random import shuffle
 
 
 def train_main(config: Config):
@@ -37,17 +38,22 @@ def train_main(config: Config):
         beta_1=config.ADAM_BETA1,
         beta_2=config.ADAM_BETA2)
     paths = util.read_dir(config.TRAINING_DATA_PATH, folder_only=False)
-
+    shuffle(paths)
+    paths_len = len(paths)
+    evaluation_paths = paths[0:int(0.005 * paths_len) + 1]
+    training_paths = paths[int(0.005 * paths_len) + 1:]
     # load tf record files into tf dataseat
-    dataset = read_training_examples(paths)
+    evaluation_dataset = read_training_examples(evaluation_paths)
+    training_dataset = read_training_examples(training_paths)
     # transform dataset
-    dataset = dataset.shuffle(120).batch(config.BATCH_SIZE)
+    evaluation_dataset = evaluation_dataset.batch(config.BATCH_SIZE)
+    training_dataset = training_dataset.shuffle(120).batch(config.BATCH_SIZE)
 
     global_step = 0
     for epoch in range(3):
         print('Start of epoch %d' % (epoch, ))
 
-        for step, (inputs_batch, label_batch) in enumerate(dataset):
+        for step, (inputs_batch, label_batch) in enumerate(training_dataset):
             with tf.GradientTape() as tape:
                 outputs = model(inputs_batch)
                 loss_function = loss_function_generator(inputs_batch)
@@ -58,14 +64,32 @@ def train_main(config: Config):
             grads = tape.gradient(loss_value, model.trainable_weights)
 
             optimizer.apply_gradients(zip(grads, model.trainable_weights))
-            if step % 1000 == 0:
+            if step != 0 and step % 1000 == 0:
+                eval_cnt = 0
+                eval_sum_loss = 0.0
+                for eval_step, (eval_inputs_batch, eval_label_batch) in enumerate(
+                        evaluation_dataset):
+                    eval_outputs = model(eval_inputs_batch)
+                    eval_loss_function = loss_function_generator(
+                        eval_inputs_batch)
+                    eval_loss_value = eval_loss_function(
+                        eval_label_batch, eval_outputs)
+                    eval_sum_loss += eval_loss_value
+                    eval_cnt += 1
+                eval_avg_loss = eval_sum_loss / eval_cnt
                 print(
                     'Training loss (for one batch) at step %s: %s' %
                     (step, float(loss_value)))
                 print(
+                    'Evaluation loss(for %s batches) at step %s: %s' %
+                    (eval_cnt, step, float(eval_avg_loss)))
+                print(
                     'Seen so far: %s samples' %
                     ((step + 1) * config.BATCH_SIZE))
                 print('Saving the models')
+                with summary_writer.as_default():
+                    tf.summary.scalar(
+                        "eval_loss", eval_avg_loss, step=global_step)
                 checkpoint.save(config.SAVE_PATH + time + "/model.ckpt")
             global_step += 1
 
