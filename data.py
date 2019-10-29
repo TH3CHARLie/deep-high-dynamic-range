@@ -108,6 +108,14 @@ def compute_training_examples(ldr_imgs: List[np.ndarray],
     label_patches = label_patches[selected_subset_idx, :, :, :]
     return input_patches, label_patches
 
+def compute_test_examples(ldr_imgs: List[np.ndarray],
+                              exposures: List[float], hdr_img: np.ndarray, config: Config):
+    inputs, label = prepare_input_features(
+        ldr_imgs, exposures, hdr_img, is_test=True)
+    inputs = util.crop_img(inputs, config.CROP_SIZE - config.BORDER)
+    label = util.crop_img(label, config.CROP_SIZE - config.BORDER)
+    return inputs, label
+
 
 def prepare_input_features(ldr_imgs: List[np.ndarray], exposures: List[float],
                            hdr_img: np.ndarray, is_test: bool = False):
@@ -417,6 +425,21 @@ def write_training_examples(
         write_cnt += 500
         filename_suffix_cnt += 1
 
+
+def write_test_examples(inputs: np.ndarray, label: np.ndarray, path: str, filename: str):
+    filename = filename.split('/')[-1]
+    if not os.path.exists(path):
+        pathlib.Path(path).mkdir(parents=True, exist_ok=True)
+    print(inputs.shape, label.shape)
+    filename = path + "Scene" + filename + ".tfrecords"
+    print(f"[writing_training_examples]: writing {filename}")
+    with tf.io.TFRecordWriter(filename) as writer:
+        inputs_bytes = inputs.tostring()
+        label_bytes = label.tostring()
+
+        example = serialize_example(inputs_bytes, label_bytes)
+        writer.write(example)
+    
 
 def read_tf_record(serialized_example):
     feature = {

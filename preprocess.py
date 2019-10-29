@@ -1,11 +1,7 @@
 from config import Config
 import util
-from data import read_exposure, read_ldr_hdr_images, compute_training_examples, write_training_examples
-
-if __name__ == "__main__":
-    config = Config()
-    preprocess_training_data(config)
-    preprocess_test_data(config)  # TODO:
+from data import read_exposure, read_ldr_hdr_images, compute_training_examples, write_training_examples, compute_test_examples, write_test_examples
+from itertools import chain
 
 
 def preprocess_training_data(config: Config):
@@ -31,4 +27,22 @@ def preprocess_training_data(config: Config):
 
 
 def preprocess_test_data(config: Config):
-    pass
+    scene_paths = util.read_dir(config.TEST_RAW_DATA_PATH)
+    scene_paths = [util.read_dir(p) for p in scene_paths]
+    scene_paths = [p for p in chain.from_iterable(scene_paths)]
+    scene_paths = sorted(scene_paths)
+
+    for scene_path in scene_paths:
+        exposures = read_exposure(scene_path)
+        ldr_imgs, hdr_img = read_ldr_hdr_images(scene_path)
+        inputs, label = compute_test_examples(
+            ldr_imgs, exposures, hdr_img, config)
+        print(f"processed scene: {scene_path}")
+
+        write_test_examples(
+            inputs, label, config.TEST_DATA_PATH, scene_path)
+
+if __name__ == "__main__":
+    config = Config()
+    # preprocess_training_data(config)
+    preprocess_test_data(config)

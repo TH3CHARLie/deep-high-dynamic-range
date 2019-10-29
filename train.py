@@ -68,10 +68,6 @@ def train_main(config: Config):
                 checkpoint.save(config.SAVE_PATH + time + "/model.ckpt")
             global_step += 1
 
-# train_direct
-# train_WE
-# train_WIE TODO:
-
 
 if __name__ == "__main__":
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
