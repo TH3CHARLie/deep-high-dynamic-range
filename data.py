@@ -430,7 +430,6 @@ def write_test_examples(inputs: np.ndarray, label: np.ndarray, path: str, filena
     filename = filename.split('/')[-1]
     if not os.path.exists(path):
         pathlib.Path(path).mkdir(parents=True, exist_ok=True)
-    print(inputs.shape, label.shape)
     filename = path + "Scene" + filename + ".tfrecords"
     print(f"[writing_training_examples]: writing {filename}")
     with tf.io.TFRecordWriter(filename) as writer:
