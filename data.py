@@ -389,18 +389,6 @@ def select_subset(input_patches: np.ndarray, patch_size: int) -> np.ndarray:
     return subset_idx
 
 
-def serialize_example(inputs, label):
-    feature = {
-        "inputs": tf_records_bytes_feature(inputs),
-        "label": tf_records_bytes_feature(label)
-    }
-
-    example_proto = tf.train.Example(
-        features=tf.train.Features(
-            feature=feature))
-    return example_proto.SerializeToString()
-
-
 def write_training_examples(
         inputs: np.ndarray, label: np.ndarray, path: str, filename: str):
     n = inputs.shape[0]
@@ -421,28 +409,26 @@ def write_training_examples(
                 cur_inputs_bytes = inputs[i, :, :, :].tostring()
                 cur_label_bytes = label[i, :, :, :].tostring()
 
-                example = serialize_example(cur_inputs_bytes, cur_label_bytes)
+                example = serialize_training_example(
+                    cur_inputs_bytes, cur_label_bytes)
                 writer.write(example)
         write_cnt += 500
         filename_suffix_cnt += 1
 
 
-def write_test_examples(
-        inputs: np.ndarray, label: np.ndarray, path: str, filename: str):
-    filename = filename.split('/')[-1]
-    if not os.path.exists(path):
-        pathlib.Path(path).mkdir(parents=True, exist_ok=True)
-    filename = path + "Scene" + filename + ".tfrecords"
-    print(f"[writing_training_examples]: writing {filename}")
-    with tf.io.TFRecordWriter(filename) as writer:
-        inputs_bytes = inputs.tostring()
-        label_bytes = label.tostring()
+def serialize_training_example(inputs, label):
+    feature = {
+        "inputs": tf_records_bytes_feature(inputs),
+        "label": tf_records_bytes_feature(label)
+    }
 
-        example = serialize_example(inputs_bytes, label_bytes)
-        writer.write(example)
+    example_proto = tf.train.Example(
+        features=tf.train.Features(
+            feature=feature))
+    return example_proto.SerializeToString()
 
 
-def read_tf_record(serialized_example):
+def read_training_tf_record(serialized_example):
     feature = {
         "inputs": tf.io.FixedLenFeature((), tf.string),
         "label": tf.io.FixedLenFeature((), tf.string),
@@ -462,7 +448,65 @@ def read_tf_record(serialized_example):
 
 def read_training_examples(files):
     tf_record_dataset = tf.data.TFRecordDataset(files)
-    parsed_dataset = tf_record_dataset.map(read_tf_record)
+    parsed_dataset = tf_record_dataset.map(read_training_tf_record)
+    return parsed_dataset
+
+
+def write_test_examples(
+        inputs: np.ndarray, label: np.ndarray, path: str, filename: str):
+    filename = filename.split('/')[-1]
+    if not os.path.exists(path):
+        pathlib.Path(path).mkdir(parents=True, exist_ok=True)
+    filename = path + "Scene" + filename + ".tfrecords"
+    print(f"[writing_training_examples]: writing {filename}")
+    with tf.io.TFRecordWriter(filename) as writer:
+        height, width, _ = inputs.shape
+        inputs_bytes = inputs.tostring()
+        label_bytes = label.tostring()
+
+        example = serialize_test_example(
+            height, width, inputs_bytes, label_bytes)
+        writer.write(example)
+
+
+def serialize_test_example(height, width, inputs, label):
+    feature = {
+        "height": tf_records_int64_feature(height),
+        "width": tf_records_int64_feature(width),
+        "inputs": tf_records_bytes_feature(inputs),
+        "label": tf_records_bytes_feature(label)
+    }
+    example_proto = tf.train.Example(
+        features=tf.train.Features(
+            feature=feature))
+    return example_proto.SerializeToString()
+
+
+def read_test_tf_record(serialized_example):
+    feature = {
+        'height': tf.io.FixedLenFeature([], tf.int64,),
+        'width': tf.io.FixedLenFeature([], tf.int64,),
+        "inputs": tf.io.FixedLenFeature((), tf.string),
+        "label": tf.io.FixedLenFeature((), tf.string),
+    }
+
+    example = tf.io.parse_single_example(serialized_example, feature)
+    height = example['height']
+    width = example['width']
+    inputs = tf.reshape(
+        tf.io.decode_raw(
+            example['inputs'], out_type=tf.float32), [
+            height, width, 18])
+    label = tf.reshape(
+        tf.io.decode_raw(
+            example['label'], out_type=tf.float32), [
+            height, width, 3])
+    return inputs, label
+
+
+def read_test_examples(files):
+    tf_record_dataset = tf.data.TFRecordDataset(files)
+    parsed_dataset = tf_record_dataset.map(read_test_tf_record)
     return parsed_dataset
 
 
@@ -536,3 +580,7 @@ def tf_records_bytes_feature(value):
     if isinstance(value, type(tf.constant(0))):
         value = value.numpy()
     return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
+
+
+def tf_records_int64_feature(value):
+    return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))

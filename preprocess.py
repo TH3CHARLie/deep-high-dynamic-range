@@ -3,6 +3,7 @@ import util
 from data import read_exposure, read_ldr_hdr_images, compute_training_examples, write_training_examples, compute_test_examples, write_test_examples
 from itertools import chain
 import os
+import sys
 
 
 def preprocess_training_data(config: Config):
@@ -50,5 +51,14 @@ def preprocess_test_data(config: Config):
 if __name__ == "__main__":
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
     config = Config()
-    # preprocess_training_data(config)
-    preprocess_test_data(config)
+    if len(sys.argv) < 2:
+        preprocess_training_data(config)
+        preprocess_test_data(config)
+    else:
+        mode = sys.argv[1]
+        if mode == 'train':
+            preprocess_training_data(config)
+        elif mode == 'test':
+            preprocess_test_data(config)
+        else:
+            pass
