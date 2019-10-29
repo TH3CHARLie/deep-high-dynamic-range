@@ -4,6 +4,8 @@ DHDRCNN
 Configuration class
 """
 
+MU = 5000
+GAMMA = 2.2
 
 class Config:
 

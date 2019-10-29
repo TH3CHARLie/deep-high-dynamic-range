@@ -6,33 +6,7 @@ import os
 import cv2
 import util
 import pathlib
-
-GAMMA = 2.2
-
-
-def preprocess_training_data(config: Config):
-    """
-    preprocess training data
-    """
-    scene_paths = util.read_dir(config.TRAINING_RAW_DATA_PATH)
-    # make sure we read scene sequentially
-    scene_paths = sorted(scene_paths)
-    cnt = 0
-    for scene_path in scene_paths:
-        exposures = read_exposure(scene_path)
-        ldr_imgs, hdr_img = read_ldr_hdr_images(scene_path)
-        inputs, label = compute_training_examples(
-            ldr_imgs, exposures, hdr_img, config)
-        cnt += inputs.shape[0]
-        print(f"processed scene: {scene_path}")
-        print(f"now image patches cnt: {cnt}")
-        
-        write_training_examples(inputs, label, config.TRAINING_DATA_PATH, scene_path)
-    print(f"total {cnt} patches")
-
-
-def preprocess_test_data(config: Config):
-    pass
+from config import GAMMA
 
 
 def read_exposure(path: str) -> List[float]:
@@ -163,13 +137,13 @@ def prepare_input_features(ldr_imgs: List[np.ndarray], exposures: List[float],
     # add clipping to avoid minus value after warpping
     warpped_ldr_imgs[0] = np.clip(warpped_ldr_imgs[0], 0, 1)
     warpped_ldr_imgs[2] = np.clip(warpped_ldr_imgs[2], 0, 1)
-    
+
     if not is_test:
         dark_ref = np.less(warpped_ldr_imgs[1], 0.5)
         bad_ref = (dark_ref & nan_idx2) | (~dark_ref & nan_idx0)
         hdr_img[bad_ref] = ldr_to_hdr(
             warpped_ldr_imgs[1][bad_ref], exposures[1])
-    
+
     ldr_concate = warpped_ldr_imgs[0]
     for i in range(1, 3):
         ldr_concate = np.concatenate(
@@ -412,34 +386,37 @@ def serialize_example(inputs, label):
         "label": tf_records_bytes_feature(label)
     }
 
-    example_proto = tf.train.Example(features=tf.train.Features(feature=feature))
+    example_proto = tf.train.Example(
+        features=tf.train.Features(
+            feature=feature))
     return example_proto.SerializeToString()
 
 
-def write_training_examples(inputs: np.ndarray, label: np.ndarray, path: str, filename: str):
+def write_training_examples(
+        inputs: np.ndarray, label: np.ndarray, path: str, filename: str):
     n = inputs.shape[0]
     filename = filename.split('/')[-1]
-    
+
     if not os.path.exists(path):
         pathlib.Path(path).mkdir(parents=True, exist_ok=True)
-    
+
     filename = path + "Scene" + filename + "_{}.tfrecords"
-    
+
     filename_suffix_cnt = 0
     write_cnt = 0
-    while (write_cnt < n):  
+    while (write_cnt < n):
         cur_filename = filename.format(filename_suffix_cnt)
         print(f"[writing_training_examples]: writing {cur_filename}")
         with tf.io.TFRecordWriter(cur_filename) as writer:
             for i in range(write_cnt, min(write_cnt + 500, n)):
                 cur_inputs_bytes = inputs[i, :, :, :].tostring()
                 cur_label_bytes = label[i, :, :, :].tostring()
-                
+
                 example = serialize_example(cur_inputs_bytes, cur_label_bytes)
                 writer.write(example)
         write_cnt += 500
         filename_suffix_cnt += 1
-    
+
 
 def read_tf_record(serialized_example):
     feature = {
@@ -448,9 +425,16 @@ def read_tf_record(serialized_example):
     }
 
     example = tf.io.parse_single_example(serialized_example, feature)
-    inputs = tf.reshape(tf.io.decode_raw(example['inputs'],out_type=tf.float32), [40, 40, 18])
-    label = tf.reshape(tf.io.decode_raw(example['label'], out_type=tf.float32), [40, 40, 3])
+    inputs = tf.reshape(
+        tf.io.decode_raw(
+            example['inputs'], out_type=tf.float32), [
+            40, 40, 18])
+    label = tf.reshape(
+        tf.io.decode_raw(
+            example['label'], out_type=tf.float32), [
+            40, 40, 3])
     return inputs, label
+
 
 def read_training_examples(files):
     tf_record_dataset = tf.data.TFRecordDataset(files)

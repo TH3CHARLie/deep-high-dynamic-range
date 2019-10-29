@@ -10,7 +10,7 @@ def read_dir(path: str, folder_only: bool = True) -> List[str]:
     Args:
         path: A str path
         folder_only: Boolean to indicate whether includes folder results only
-    
+
     Returns:
         A list of str of paths
     """
@@ -25,7 +25,7 @@ def im2single(img: np.ndarray) -> np.ndarray:
 
     Args:
         img: A integer image
-    
+
     Returns:
         A float image
     """
@@ -38,7 +38,7 @@ def im2double(img: np.ndarray) -> np.ndarray:
 
     Args:
         img: A integer image
-    
+
     Returns:
         A double image
     """
@@ -51,7 +51,7 @@ def float2int(img: np.ndarray, type) -> np.ndarray:
 
     Args:
         img: A single-precision float image
-    
+
     Returns:
         A uint16 image image
     """
@@ -63,8 +63,8 @@ def np_compute_PSNR(input: np.ndarray, reference: np.ndarray) -> float:
 
     Args:
         input: A produced image
-        reference: A reference image 
-    
+        reference: A reference image
+
     Returns:
         Error in float
     """
@@ -77,27 +77,14 @@ def np_compute_PSNR(input: np.ndarray, reference: np.ndarray) -> float:
     return error
 
 
-def draw_hsv(flow):
-    h, w = flow.shape[:2]
-    fx, fy = flow[:,:,0], flow[:,:,1]
-    ang = np.arctan2(fy, fx) + np.pi
-    v = np.sqrt(fx*fx+fy*fy)
-    hsv = np.zeros((h, w, 3), np.uint8)
-    hsv[...,0] = ang*(180/np.pi/2)
-    hsv[...,1] = 255
-    hsv[...,2] = np.minimum(v*4, 255)
-    bgr = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
-    return bgr
-
-
 def crop_img(input: np.ndarray, pad: int) -> np.ndarray:
     """Crop out image boundary
 
     Args:
         Input: A image
         pad: A int value of cropped size
-    
+
     Returns:
         Cropped image
     """
-    return input[pad : -pad, pad : -pad, :]
+    return input[pad: -pad, pad: -pad, :]

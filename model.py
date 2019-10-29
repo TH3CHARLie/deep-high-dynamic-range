@@ -1,7 +1,8 @@
 import tensorflow as tf
+from config import MU
 
-MU = 5000
 output_shape = {'direct': 3, 'WE': 9, 'WIE': '18'}
+
 
 class DHDRCNN(tf.keras.Model):
 
@@ -14,8 +15,7 @@ class DHDRCNN(tf.keras.Model):
         self.conv3 = tf.keras.layers.Conv2D(50, (3, 3), activation='relu', strides=(
             1, 1), padding='same', kernel_initializer='zeros')
         self.conv4 = tf.keras.layers.Conv2D(output_shape[model_type], (1, 1), activation='sigmoid', strides=(
-                1, 1), padding='same', kernel_initializer='zeros')
-
+            1, 1), padding='same', kernel_initializer='zeros')
 
     def call(self, inputs):
         x1 = self.conv1(inputs)
@@ -26,11 +26,14 @@ class DHDRCNN(tf.keras.Model):
 
 class DirectLossFunction(tf.keras.losses.Loss):
     def call(self, y_true, y_pred):
-        return tf.reduce_sum(tf.square(range_compress(y_true) - range_compress(y_pred)))
+        return tf.reduce_sum(
+            tf.square(range_compress(y_true) - range_compress(y_pred)))
+
 
 class WELossFunction(tf.keras.losses.Loss):
     def call(self, y_true, y_pred):
         pass
+
 
 class WIELossFunction(tf.keras.losses.Loss):
     def call(self, y_true, y_pred):
@@ -55,8 +58,8 @@ def tf_compute_PSNR(input, reference):
 
     Args:
         input: A produced image
-        reference: A reference image 
-    
+        reference: A reference image
+
     Returns:
         Error in float
     """
