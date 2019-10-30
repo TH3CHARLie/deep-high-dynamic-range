@@ -121,7 +121,7 @@ def create_model_and_loss(model_type: str):
         return DHDRCNN("WIE"), WIELossFunctionGenerator
 
 
-def tf_compute_PSNR(input, reference):
+def tf_compute_PSNR(inputs, reference):
     """Compute Peak signal-to-noise ratio(PSNR)
 
     Args:
@@ -132,8 +132,8 @@ def tf_compute_PSNR(input, reference):
         Error in float
     """
 
-    num_pixels = input.size
-    squared_error = tf.reduce_sum(tf.square(input - reference)) / num_pixels
+    num_pixels = tf.size(inputs, out_type=tf.float32)
+    squared_error = tf.reduce_sum(tf.square(inputs - reference)) / num_pixels
     numerator = tf.math.log(1.0 / squared_error)
     denominator = tf.math.log(tf.constant(10, dtype=numerator.dtype))
     error = 10.0 * numerator / denominator

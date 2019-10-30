@@ -1,4 +1,4 @@
-from config import Config
+from config import *
 import util
 from data import read_exposure, read_ldr_hdr_images, compute_training_examples, write_training_examples, compute_test_examples, write_test_examples
 from itertools import chain
@@ -6,11 +6,11 @@ import os
 import sys
 
 
-def preprocess_training_data(config: Config):
+def preprocess_training_data():
     """
     Preprocess training data
     """
-    scene_paths = util.read_dir(config.TRAINING_RAW_DATA_PATH)
+    scene_paths = util.read_dir(TRAINING_RAW_DATA_PATH)
     # make sure we read scene sequentially
     scene_paths = sorted(scene_paths)
     cnt = 0
@@ -18,21 +18,21 @@ def preprocess_training_data(config: Config):
         exposures = read_exposure(scene_path)
         ldr_imgs, hdr_img = read_ldr_hdr_images(scene_path)
         inputs, label = compute_training_examples(
-            ldr_imgs, exposures, hdr_img, config)
+            ldr_imgs, exposures, hdr_img)
         cnt += inputs.shape[0]
         print(f"processed scene: {scene_path}")
         print(f"now image patches cnt: {cnt}")
 
         write_training_examples(
-            inputs, label, config.TRAINING_DATA_PATH, scene_path)
+            inputs, label, TRAINING_DATA_PATH, scene_path)
     print(f"total {cnt} patches")
 
 
-def preprocess_test_data(config: Config):
+def preprocess_test_data():
     """
     Preprocess test data
     """
-    scene_paths = util.read_dir(config.TEST_RAW_DATA_PATH)
+    scene_paths = util.read_dir(TEST_RAW_DATA_PATH)
     scene_paths = [util.read_dir(p) for p in scene_paths]
     scene_paths = [p for p in chain.from_iterable(scene_paths)]
     scene_paths = sorted(scene_paths)
@@ -41,24 +41,23 @@ def preprocess_test_data(config: Config):
         exposures = read_exposure(scene_path)
         ldr_imgs, hdr_img = read_ldr_hdr_images(scene_path)
         inputs, label = compute_test_examples(
-            ldr_imgs, exposures, hdr_img, config)
+            ldr_imgs, exposures, hdr_img)
         print(f"processed scene: {scene_path}")
 
         write_test_examples(
-            inputs, label, config.TEST_DATA_PATH, scene_path)
+            inputs, label, TEST_DATA_PATH, scene_path)
 
 
 if __name__ == "__main__":
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
-    config = Config()
     if len(sys.argv) < 2:
-        preprocess_training_data(config)
-        preprocess_test_data(config)
+        preprocess_training_data()
+        preprocess_test_data()
     else:
         mode = sys.argv[1]
         if mode == 'train':
-            preprocess_training_data(config)
+            preprocess_training_data()
         elif mode == 'test':
-            preprocess_test_data(config)
+            preprocess_test_data()
         else:
             pass

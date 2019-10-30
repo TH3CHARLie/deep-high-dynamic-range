@@ -1,12 +1,11 @@
 import numpy as np
 import tensorflow as tf
-from config import Config
+from config import *
 from typing import List, Tuple
 import os
 import cv2
 import util
 import pathlib
-from config import GAMMA
 
 
 def read_exposure(path: str) -> List[float]:
@@ -61,60 +60,60 @@ def read_ldr_hdr_images(path: str) -> Tuple[List[np.ndarray], np.ndarray]:
 
 
 def compute_training_examples(ldr_imgs: List[np.ndarray],
-                              exposures: List[float], hdr_img: np.ndarray, config: Config):
+                              exposures: List[float], hdr_img: np.ndarray):
     inputs, label = prepare_input_features(
         ldr_imgs, exposures, hdr_img, is_test=False)
     # crop out boundary
-    inputs = util.crop_img(inputs, config.CROP_SIZE)
-    label = util.crop_img(label, config.CROP_SIZE)
+    inputs = util.crop_img(inputs, CROP_SIZE)
+    label = util.crop_img(label, CROP_SIZE)
 
     # compute patches
     h, w, c = inputs.shape
-    num_patches = get_patch_nums(h, w, config.PATCH_SIZE, config.STRIDE)
+    num_patches = get_patch_nums(h, w, PATCH_SIZE, STRIDE)
 
     # generate patches
     input_patches = np.zeros(
         (num_patches *
-         config.NUM_AUGMENT,
-         config.PATCH_SIZE,
-         config.PATCH_SIZE,
+         NUM_AUGMENT,
+         PATCH_SIZE,
+         PATCH_SIZE,
          c),
         dtype=np.float32)
     label_patches = np.zeros(
         (num_patches *
-         config.NUM_AUGMENT,
-         config.PATCH_SIZE,
-         config.PATCH_SIZE,
+         NUM_AUGMENT,
+         PATCH_SIZE,
+         PATCH_SIZE,
          3),
         dtype=np.float32)
 
-    augument_idx = np.random.permutation(config.NUM_TOTAL_AUGMENT)
+    augument_idx = np.random.permutation(NUM_TOTAL_AUGMENT)
 
-    for i in range(config.NUM_AUGMENT):
+    for i in range(NUM_AUGMENT):
         idx = augument_idx[i]
         augmented_inputs, augmented_labels = augment_data(inputs, label, idx)
         cur_input_patches = get_patches(
-            augmented_inputs, config.PATCH_SIZE, config.STRIDE)
+            augmented_inputs, PATCH_SIZE, STRIDE)
         cur_label_patches = get_patches(
-            augmented_labels, config.PATCH_SIZE, config.STRIDE)
+            augmented_labels, PATCH_SIZE, STRIDE)
         input_patches[i * num_patches: (i + 1) *
                       num_patches, :, :, :] = cur_input_patches
         label_patches[i * num_patches: (i + 1) *
                       num_patches, :, :, :] = cur_label_patches
 
     selected_subset_idx = select_subset(
-        input_patches[:, :, :, 3: 6], config.PATCH_SIZE)
+        input_patches[:, :, :, 3: 6], PATCH_SIZE)
     input_patches = input_patches[selected_subset_idx, :, :, :]
     label_patches = label_patches[selected_subset_idx, :, :, :]
     return input_patches, label_patches
 
 
 def compute_test_examples(ldr_imgs: List[np.ndarray],
-                          exposures: List[float], hdr_img: np.ndarray, config: Config):
+                          exposures: List[float], hdr_img: np.ndarray):
     inputs, label = prepare_input_features(
         ldr_imgs, exposures, hdr_img, is_test=True)
-    inputs = util.crop_img(inputs, config.CROP_SIZE - config.BORDER)
-    label = util.crop_img(label, config.CROP_SIZE - config.BORDER)
+    inputs = util.crop_img(inputs, CROP_SIZE - BORDER)
+    label = util.crop_img(label, CROP_SIZE - BORDER)
     return inputs, label
 
 
@@ -244,7 +243,6 @@ def get_patch_nums(height: int, width: int, patch_size: int, stride: int):
     Args:
         height: Image height
         width: Image width
-        config: Config object
 
     Returns:
         Number of patches in int
@@ -461,6 +459,7 @@ def write_test_examples(
     print(f"[writing_training_examples]: writing {filename}")
     with tf.io.TFRecordWriter(filename) as writer:
         height, width, _ = inputs.shape
+        print(f"[writing_training_examples]: {height} {width}")
         inputs_bytes = inputs.tostring()
         label_bytes = label.tostring()
 
@@ -484,8 +483,8 @@ def serialize_test_example(height, width, inputs, label):
 
 def read_test_tf_record(serialized_example):
     feature = {
-        'height': tf.io.FixedLenFeature([], tf.int64,),
-        'width': tf.io.FixedLenFeature([], tf.int64,),
+        'height': tf.io.FixedLenFeature((), tf.int64,),
+        'width': tf.io.FixedLenFeature((), tf.int64,),
         "inputs": tf.io.FixedLenFeature((), tf.string),
         "label": tf.io.FixedLenFeature((), tf.string),
     }
