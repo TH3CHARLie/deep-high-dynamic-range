@@ -6,7 +6,7 @@ import os
 import cv2
 import util
 import pathlib
-import scipy
+
 
 def read_exposure(path: str) -> List[float]:
     """Read exposure data from exposures.txt,
@@ -64,10 +64,6 @@ def compute_training_examples(ldr_imgs: List[np.ndarray],
     inputs, label = prepare_input_features(
         ldr_imgs, exposures, hdr_img, is_test=False)
     
-    for i in range(3):
-        cv2.imshow(f"ldr{i}", inputs[:, :, i * 3: (i+1) * 3])
-    cv2.imshow("hdr", label)
-    cv2.waitKey(0)
 
     # crop out boundary
     inputs = util.crop_img(inputs, CROP_SIZE)

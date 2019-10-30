@@ -4,6 +4,17 @@ from data import read_exposure, read_ldr_hdr_images, compute_training_examples, 
 from itertools import chain
 import os
 import sys
+import multiprocessing as mp
+
+def preprocess_one_training_scene(scene_path):
+    exposures = read_exposure(scene_path)
+    ldr_imgs, hdr_img = read_ldr_hdr_images(scene_path)
+    inputs, label = compute_training_examples(
+        ldr_imgs, exposures, hdr_img)
+    print(f"processed scene: {scene_path}")
+
+    write_training_examples(
+        inputs, label, TRAINING_DATA_PATH, scene_path)
 
 
 def preprocess_training_data():
@@ -13,19 +24,9 @@ def preprocess_training_data():
     scene_paths = util.read_dir(TRAINING_RAW_DATA_PATH)
     # make sure we read scene sequentially
     scene_paths = sorted(scene_paths)
-    cnt = 0
-    for scene_path in scene_paths:
-        exposures = read_exposure(scene_path)
-        ldr_imgs, hdr_img = read_ldr_hdr_images(scene_path)
-        inputs, label = compute_training_examples(
-            ldr_imgs, exposures, hdr_img)
-        cnt += inputs.shape[0]
-        print(f"processed scene: {scene_path}")
-        print(f"now image patches cnt: {cnt}")
-
-        write_training_examples(
-            inputs, label, TRAINING_DATA_PATH, scene_path)
-    print(f"total {cnt} patches")
+    pool = mp.Pool(16)
+    pool.map(preprocess_one_training_scene, [path for path in scene_paths])
+    pool.close()
 
 
 def preprocess_test_data():
