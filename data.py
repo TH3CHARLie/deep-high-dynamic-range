@@ -6,7 +6,7 @@ import os
 import cv2
 import util
 import pathlib
-
+import scipy
 
 def read_exposure(path: str) -> List[float]:
     """Read exposure data from exposures.txt,
@@ -63,6 +63,12 @@ def compute_training_examples(ldr_imgs: List[np.ndarray],
                               exposures: List[float], hdr_img: np.ndarray):
     inputs, label = prepare_input_features(
         ldr_imgs, exposures, hdr_img, is_test=False)
+    
+    for i in range(3):
+        cv2.imshow(f"ldr{i}", inputs[:, :, i * 3: (i+1) * 3])
+    cv2.imshow("hdr", label)
+    cv2.waitKey(0)
+
     # crop out boundary
     inputs = util.crop_img(inputs, CROP_SIZE)
     label = util.crop_img(label, CROP_SIZE)
@@ -212,9 +218,11 @@ def compute_flow(prev: np.ndarray, next: np.ndarray) -> np.ndarray:
     prev_gray = util.float2int(prev_gray, np.uint16)
     next_gray = util.float2int(next_gray, np.uint16)
 
-    return cv2.calcOpticalFlowFarneback(prev_gray, next_gray, flow=None,
-                                        pyr_scale=0.5, levels=3, winsize=15, iterations=3,
-                                        poly_n=7, poly_sigma=1.2, flags=0)
+    inst = cv2.optflow.createOptFlow_DeepFlow()
+    return inst.calc(prev_gray, next_gray, None)
+    # return cv2.calcOpticalFlowFarneback(prev_gray, next_gray, flow=None,
+    #                                     pyr_scale=0.5, levels=5, winsize=30, iterations=5,
+    #                                     poly_n=7, poly_sigma=1.5, flags=0)
 
 
 def warp_using_flow(img: np.ndarray, flow: np.ndarray) -> np.ndarray:
@@ -232,7 +240,7 @@ def warp_using_flow(img: np.ndarray, flow: np.ndarray) -> np.ndarray:
     flow[:, :, 0] += np.arange(w)
     flow[:, :, 1] += np.arange(h)[:, np.newaxis]
     # border value needs to fill all 3 channels
-    res = cv2.remap(img, flow, None, cv2.INTER_CUBIC,
+    res = cv2.remap(img, flow, None, cv2.INTER_LINEAR,
                     borderValue=np.array([np.nan, np.nan, np.nan]))
     return res
 
