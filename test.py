@@ -11,7 +11,7 @@ from config import TEST_DATA_PATH
 def test_model():
     model_type = sys.argv[1]
     ckpt_path = sys.argv[2]
-    model, loss_function_generator = create_model_and_loss(model_type)
+    model, _, output_function = create_model_and_loss(model_type)
     checkpoint = tf.train.Checkpoint(myModel=model)
     checkpoint.restore(tf.train.latest_checkpoint(
         ckpt_path))
@@ -22,7 +22,8 @@ def test_model():
     sum_psnr = 0.0
     for (inputs, label) in test_dataset:
         outputs = model(inputs)
-        psnr = tf_compute_PSNR(outputs, label)
+        output_image = output_function(inputs, outputs)
+        psnr = tf_compute_PSNR(output_image, label)
         sum_psnr += psnr.numpy()
         scene_cnt += 1
     print(f"avg PSNR: {sum_psnr / scene_cnt}")

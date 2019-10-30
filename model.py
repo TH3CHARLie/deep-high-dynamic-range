@@ -24,6 +24,10 @@ class DHDRCNN(tf.keras.Model):
         return self.conv4(x3)
 
 
+def DirectOutputFunction(inputs, outputs):
+    return outputs
+
+
 def DirectLossFunctionGenerator(inputs):
     """Direct loss
     See Section 3.2(1) for more details
@@ -40,6 +44,19 @@ def DirectLossFunctionGenerator(inputs):
     return loss_function
 
 
+def WEOutputFunction(inputs, outputs):
+    img1 = inputs[:, :, :, 9:12]
+    img2 = inputs[:, :, :, 12:15]
+    img3 = inputs[:, :, :, 15:18]
+    weight1 = outputs[:, :, :, 0:3]
+    weight2 = outputs[:, :, :, 3:6]
+    weight3 = outputs[:, :, :, 6:9]
+    total_weights = weight1 + weight2 + weight3 + WEIGHT_EPS
+    blended = (img1 * weight1 + img2 * weight2 +
+               img3 * weight3) / total_weights
+    return blended
+
+
 def WELossFunctionGenerator(inputs):
     """Weighted Estimator(WE) loss
     See Section 3.2(2) for more details
@@ -51,18 +68,23 @@ def WELossFunctionGenerator(inputs):
         WE architecture loss function
     """
     def loss_function(y_true, y_pred):
-        img1 = inputs[:, :, :, 9:12]
-        img2 = inputs[:, :, :, 12:15]
-        img3 = inputs[:, :, :, 15:18]
-        weight1 = y_pred[:, :, :, 0:3]
-        weight2 = y_pred[:, :, :, 3:6]
-        weight3 = y_pred[:, :, :, 6:9]
-        total_weights = weight1 + weight2 + weight3 + WEIGHT_EPS
-        blended = (img1 * weight1 + img2 * weight2 +
-                   img3 * weight3) / total_weights
+        blended = WEOutputFunction(inputs, y_pred)
         return tf.reduce_sum(
             tf.square(range_compress(y_true) - range_compress(blended)))
     return loss_function
+
+
+def WIEOutputFunction(inputs, outputs):
+    img1 = outputs[:, :, :, 9:12]
+    img2 = outputs[:, :, :, 12:15]
+    img3 = outputs[:, :, :, 15:18]
+    weight1 = outputs[:, :, :, 0:3]
+    weight2 = outputs[:, :, :, 3:6]
+    weight3 = outputs[:, :, :, 6:9]
+    total_weights = weight1 + weight2 + weight3 + WEIGHT_EPS
+    blended = (img1 * weight1 + img2 * weight2 +
+               img3 * weight3) / total_weights
+    return blended
 
 
 def WIELossFunctionGenerator(inputs):
@@ -76,15 +98,7 @@ def WIELossFunctionGenerator(inputs):
         WIE architecture loss function
     """
     def loss_function(y_true, y_pred):
-        img1 = y_pred[:, :, :, 9:12]
-        img2 = y_pred[:, :, :, 12:15]
-        img3 = y_pred[:, :, :, 15:18]
-        weight1 = y_pred[:, :, :, 0:3]
-        weight2 = y_pred[:, :, :, 3:6]
-        weight3 = y_pred[:, :, :, 6:9]
-        total_weights = weight1 + weight2 + weight3 + WEIGHT_EPS
-        blended = (img1 * weight1 + img2 * weight2 +
-                   img3 * weight3) / total_weights
+        blended = WIEOutputFunction(inputs, y_pred)
         return tf.reduce_sum(
             tf.square(range_compress(y_true) - range_compress(blended)))
     return loss_function
@@ -114,11 +128,12 @@ def create_model_and_loss(model_type: str):
             2: Corresponding loss function generator function
     """
     if model_type.lower() == "direct":
-        return DHDRCNN("direct"), DirectLossFunctionGenerator
+        return DHDRCNN(
+            "direct"), DirectLossFunctionGenerator, DirectOutputFunction
     elif model_type.lower() == "we":
-        return DHDRCNN("WE"), WELossFunctionGenerator
+        return DHDRCNN("WE"), WELossFunctionGenerator, WEOutputFunction
     elif model_type.lower() == "wie":
-        return DHDRCNN("WIE"), WIELossFunctionGenerator
+        return DHDRCNN("WIE"), WIELossFunctionGenerator, WIEOutputFunction
 
 
 def tf_compute_PSNR(inputs, reference):
