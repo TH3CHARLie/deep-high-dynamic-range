@@ -3,9 +3,8 @@ __pycache__
 .DS_Store
 data/Training/
 data/Test/
-reference/
 .mypy_cache/
-optical-flow/
 tf-data/
 save/
-tensorboard
+tensorboard/
+flow/

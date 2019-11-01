@@ -27,8 +27,8 @@ ADAM_EPS = 1e-8
 
 # data path
 TRAINING_RAW_DATA_PATH = "./data/Training/"
-TRAINING_DATA_PATH = "./tf-data/train-single/"
+TRAINING_DATA_PATH = "./tf-data/train-deepflow/"
 TEST_RAW_DATA_PATH = "./data/Test/"
-TEST_DATA_PATH = "./tf-data/test-single/"
+TEST_DATA_PATH = "./tf-data/test-deepflow/"
 SAVE_PATH = "./save/"
 TENSORBOARD_PATH = "./tensorboard/"
