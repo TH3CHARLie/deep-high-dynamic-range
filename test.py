@@ -6,6 +6,15 @@ import sys
 import util
 from data import read_test_examples
 from config import TEST_DATA_PATH
+import pathlib
+import os
+
+def generate_HDR(hdr_img, path):
+    path = path.replace('data', 'output')
+    if not os.path.exists(path):
+        pathlib.Path(path).mkdir(parents=True, exist_ok=True)
+    file_path = path + "/HDRImg.hdr"
+    cv2.imwrite(file_path, hdr_img)
 
 
 def test_model():
@@ -25,6 +34,7 @@ def test_model():
         output_image = output_function(inputs, outputs)
         psnr = tf_compute_PSNR(output_image, label)
         sum_psnr += psnr.numpy()
+        generate_HDR(output_image.numpy()[0], test_paths[scene_cnt])
         scene_cnt += 1
     print(f"avg PSNR: {sum_psnr / scene_cnt}")
 

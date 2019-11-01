@@ -360,8 +360,8 @@ def get_patches(inputs: np.ndarray, patch_size: int,
          c),
         dtype=np.float32)
     cnt = 0
-    for x in range(0, w - patch_size, stride):
-        for y in range(0, h - patch_size, stride):
+    for x in range(0, w - patch_size + 1, stride):
+        for y in range(0, h - patch_size + 1, stride):
             patches[cnt, :, :, :] = inputs[y: y +
                                            patch_size, x: x + patch_size, :]
             cnt += 1
