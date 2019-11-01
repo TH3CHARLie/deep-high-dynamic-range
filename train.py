@@ -48,7 +48,7 @@ def train_main():
     test_dataset = read_test_examples(test_paths)
     test_dataset = test_dataset.batch(1)
     global_step = 0
-    for epoch in range(3):
+    for epoch in range(2):
         print('Start of epoch %d' % (epoch, ))
 
         for step, (inputs_batch, label_batch) in enumerate(training_dataset):
