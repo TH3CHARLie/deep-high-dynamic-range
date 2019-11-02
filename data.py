@@ -139,6 +139,7 @@ def prepare_input_features(ldr_imgs: List[np.ndarray], exposures: List[float],
     # warpped_ldr_imgs.append(ldr_to_ldr(ldr_imgs[1], exposures[1], exposures[0]))
     # warpped_ldr_imgs.append(ldr_imgs[1])
     # warpped_ldr_imgs.append(ldr_to_ldr(ldr_imgs[1], exposures[1], exposures[2]))
+
     warpped_ldr_imgs = compute_optical_flow(ldr_imgs, exposures)
     nan_idx0 = np.isnan(warpped_ldr_imgs[0])
     nan_idx2 = np.isnan(warpped_ldr_imgs[2])
@@ -154,7 +155,7 @@ def prepare_input_features(ldr_imgs: List[np.ndarray], exposures: List[float],
     if not is_test:
         dark_ref = np.less(warpped_ldr_imgs[1], 0.5)
         bad_ref = (dark_ref & nan_idx2) | (~dark_ref & nan_idx0)
-        bad_ref = dark_ref
+        # bad_ref = dark_ref
         hdr_img[bad_ref] = ldr_to_hdr(
             warpped_ldr_imgs[1][bad_ref], exposures[1])
 

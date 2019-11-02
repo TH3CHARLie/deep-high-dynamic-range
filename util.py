@@ -2,6 +2,7 @@ import os
 import numpy as np
 from typing import List
 import cv2
+from config import MU
 
 
 def read_dir(path: str, folder_only: bool = True) -> List[str]:
@@ -88,3 +89,15 @@ def crop_img(input: np.ndarray, pad: int) -> np.ndarray:
         Cropped image
     """
     return input[pad: -pad, pad: -pad, :]
+
+
+def np_range_compress(img):
+    """Differentiable tonemapping operator
+
+    Args:
+        img: input image/batch of images
+
+    Returns:
+        Tonemapped images
+    """
+    return np.log(1.0 + MU * img) / np.log(1.0 + MU)
