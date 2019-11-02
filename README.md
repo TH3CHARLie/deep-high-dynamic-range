@@ -8,6 +8,9 @@ Tensorflow implementation of SIGGRAPH 17 paper: Deep High Dynamic Range Imaging 
 | ---- | ------------ | ----- | ---------- | ----- | ------ |
 | deepflow-direct | deepflow | direct | 20 | 2 | 39.96 |
 | deepflow-wie | deepflow | WIE | 20 | 2 | 40.09 |
+| single-stacked-direct | no | direct | 20 | 2 | 34.72 |
+| single-stacked-wie | no | WIE | 20 | 2 | 35.35 |
+
 
 
 ## Reference
