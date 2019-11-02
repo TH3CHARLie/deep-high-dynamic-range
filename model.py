@@ -9,13 +9,13 @@ class DHDRCNN(tf.keras.Model):
     def __init__(self, model_type):
         super(DHDRCNN, self).__init__()
         self.conv1 = tf.keras.layers.Conv2D(100, (7, 7), activation='relu', strides=(
-            1, 1), padding='same', kernel_initializer='zeros')
+            1, 1), padding='same', kernel_initializer='glorot_uniform')
         self.conv2 = tf.keras.layers.Conv2D(100, (5, 5), activation='relu', strides=(
-            1, 1), padding='same', kernel_initializer='zeros')
+            1, 1), padding='same', kernel_initializer='glorot_uniform')
         self.conv3 = tf.keras.layers.Conv2D(50, (3, 3), activation='relu', strides=(
-            1, 1), padding='same', kernel_initializer='zeros')
+            1, 1), padding='same', kernel_initializer='glorot_uniform')
         self.conv4 = tf.keras.layers.Conv2D(output_shape[model_type], (1, 1), activation='sigmoid', strides=(
-            1, 1), padding='same', kernel_initializer='zeros')
+            1, 1), padding='same', kernel_initializer='glorot_uniform')
 
     def call(self, inputs):
         x1 = self.conv1(inputs)

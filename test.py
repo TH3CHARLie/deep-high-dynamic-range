@@ -24,6 +24,7 @@ def test_model():
     checkpoint = tf.train.Checkpoint(myModel=model)
     checkpoint.restore(tf.train.latest_checkpoint(
         ckpt_path))
+    model.build(input_shape=(1, 912, 1412, 18))
     test_paths = util.read_dir(TEST_DATA_PATH, folder_only=False)
     test_dataset = read_test_examples(test_paths)
     test_dataset = test_dataset.batch(1)
