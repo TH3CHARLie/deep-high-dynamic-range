@@ -35,7 +35,7 @@ python test.py [model_type] [checkpoint_path]
 
 Example:
 ```bash
-python test.py saved-checkpoints/deepflow-direct/model.ckpt-100
+python test.py direct saved-checkpoints/deepflow-direct/model.ckpt-100
 ```
 
 
