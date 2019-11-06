@@ -13,6 +13,10 @@ from random import shuffle
 
 
 def train_main():
+    if len(sys.argv < 2):
+        print("error: no enough arguments")
+        print("usage: python train.py [model_type]")
+        exit(1)
     model_type = sys.argv[1]
 
     model, loss_function_generator, output_function = create_model_and_loss(

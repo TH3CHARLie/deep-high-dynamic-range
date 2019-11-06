@@ -63,8 +63,8 @@ def compute_training_examples(ldr_imgs: List[np.ndarray],
                               exposures: List[float], hdr_img: np.ndarray):
     inputs, label = prepare_input_features(
         ldr_imgs, exposures, hdr_img, is_test=False)
-    
 
+    
     # crop out boundary
     inputs = util.crop_img(inputs, CROP_SIZE)
     label = util.crop_img(label, CROP_SIZE)

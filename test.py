@@ -22,6 +22,10 @@ def generate_HDR_LDR(hdr_img, path):
 
 
 def test_model():
+    if len(sys.argv < 3):
+        print("error: no enough arguments")
+        print("usage: python test.py [model_type] [checkpoint_path]")
+        exit(1)
     model_type = sys.argv[1]
     ckpt_path = sys.argv[2]
     
@@ -45,7 +49,8 @@ def test_model():
         psnr = tf_compute_PSNR(output_image, label)
         sum_psnr += psnr.numpy()
         generate_HDR_LDR(output_image.numpy()[0], test_paths[scene_cnt])
-        scene_cnt += 1
+        scene_cnt += 1   
+        print(f"current PSNR {psnr}")
     print(f"avg PSNR: {sum_psnr / scene_cnt}")
 
 
