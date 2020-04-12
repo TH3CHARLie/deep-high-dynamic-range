@@ -22,7 +22,7 @@ def generate_HDR_LDR(hdr_img, path):
 
 
 def test_model():
-    if len(sys.argv < 3):
+    if len(sys.argv) < 3:
         print("error: no enough arguments")
         print("usage: python test.py [model_type] [checkpoint_path]")
         exit(1)
