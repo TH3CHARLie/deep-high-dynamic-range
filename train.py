@@ -13,7 +13,7 @@ from random import shuffle
 
 
 def train_main():
-    if len(sys.argv < 2):
+    if len(sys.argv) < 2:
         print("error: no enough arguments")
         print("usage: python train.py [model_type]")
         exit(1)
