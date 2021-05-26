@@ -1,6 +1,7 @@
 # deep-high-dynamic-range
 Tensorflow implementation of SIGGRAPH 17 paper: Deep High Dynamic Range Imaging of Dynamic Scenes
 
+Update 2021-05-26: This implementation is out of date and I do not intend to maintain it as it's only a course project during my undergrad, so I've archived it.
 
 ## Installation
 This implementation requires `python3`, `tensorflow 2.0` and `opencv`. Please install dependencies via:
